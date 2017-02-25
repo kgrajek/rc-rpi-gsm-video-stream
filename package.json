@@ -4,6 +4,7 @@
   "description": "GSM Remote controlled - video streaming - vehicle",
   "main": "index.js",
   "scripts": {
+    "start": "./run-on-srv --httpPort=8080 --streamPort=8081 --feedPort=8082 --ctrlPort=8083 --secret=dupa123",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
