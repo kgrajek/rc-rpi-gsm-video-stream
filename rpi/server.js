@@ -6,7 +6,6 @@ const argv = require('yargs')
 	.help()
 	.argv
 
-
 var keyToGpio = {
 	dpad_l: 0,
 	dpad_r: 1,

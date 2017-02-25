@@ -32,7 +32,7 @@ if (HTTP_PORT) {
 
 // Leechers of video server
 
-var socketServer = new WebSocket.Server({port: WEBSOCKET_PORT, perMessageDeflate: false});
+var socketServer = new WebSocket.Server({ port:WEBSOCKET_PORT, perMessageDeflate:false });
 socketServer.connectionCount = 0;
 socketServer.on('connection', function(socket) {
 	socketServer.connectionCount++;
