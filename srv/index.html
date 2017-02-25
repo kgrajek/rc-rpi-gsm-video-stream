@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+	<meta name="robots" content="no-index,no-follow"/>
+	<meta name="author" content="kgrajek"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+	<style type="text/css">
+		html, body {
+			position: relative;
+			background-color: #111;
+			text-align: center;
+			margin: 0;
+			font-family: Arial;
+		}
+
+		#stdvideo {
+			display: block;
+			width: 100%;
+			height: 40vh;
+		}
+
+		#console {
+			width: 100%;
+			height: 25vh;
+			text-align: left;
+		}
+
+		.buttons {
+			position: relative;
+			width: 100%;
+			max-width: 50cm;
+			margin-left: auto;
+			margin-right: auto;
+			height: 35vh;
+		}
+		.button {
+			position: absolute;
+			width: 25%;
+			height: 33.3%;
+			line-height: 50%;
+			font-size: 100%;
+			padding: 0;
+			text-align: center;
+		}
+
+		.noselect {
+			-webkit-touch-callout: none;
+			-webkit-user-select: none;
+			-khtml-user-select: none;
+			-moz-user-select: none;
+			-ms-user-select: none;
+			user-select: none;
+		}
+	</style>
+</head>
+<body>
+	<canvas id="stdvideo" style=""></canvas>
+
+	<div id="console">
+		<button id="fullscreen" class="" style="position:absolute; top:0%; right:0%; ">fullscreen</button>
+	</div>
+
+	<div class="buttons noselect">
+		<button id="dpad_l" class="button" style="top:0%; left:0%; ">◀</button>
+		<button id="dpad_r" class="button" style="top:0%; left:25%;">▶</button>
+		<button id="dpad_t" class="button" style="top:0%; left:50%;">▲</button>
+		<button id="dpad_d" class="button" style="top:0%; left:75%;">▼</button>
+
+		<button id="joyL_l" class="button" style="top:33.3%; left:0%;">◀</button>
+		<button id="joyL_r" class="button" style="top:33.3%; left:25%;">▶</button>
+		<button id="joyL_t" class="button" style="top:33.3%;  left:50%;">▲</button>
+		<button id="joyL_d" class="button" style="top:33.3%; left:75%;">▼</button>
+
+		<button id="x" class="button" style="top:66.6%;  left:0%;">X</button>
+		<button id="y" class="button" style="top:66.6%;  left:25%;">Y</button>
+		<button id="a" class="button" style="top:66.6%; left:50%;">A</button>
+		<button id="b" class="button" style="top:66.6%; left:75%;">B</button>
+	</div>
+
+	<script type="text/javascript" src="libs/jsmpeg.min.js"></script>
+	<script type="text/javascript" src="libs/console.js"></script>
+	<script type="text/javascript">
+		consoleapi$initialize(document.getElementById('console'));
+	</script>
+	<script type="text/javascript" src="npmlibs/screenfull/dist/screenfull.js"></script>
+	<script type="text/javascript" src="npmlibs/jquery/dist/jquery.min.js"></script>
+	<script type="text/javascript">
+		var query = location.search.substr(1);
+		var result = {};
+		query.split("&").forEach(function(part) {
+			var item = part.split("=");
+
+			result[item[0]] = decodeURIComponent(item[1]);
+		});
+	</script>
+	<script type="text/javascript">
+		function fetchParam(value, missingText, defaultValue) {
+			if (!value) {
+				return window.prompt(missingText, defaultValue);
+			}
+
+			return value;
+		}
+	</script>
+	<script type="text/javascript">
+		document.getElementById('fullscreen').addEventListener('click', function() {
+			if (screenfull.enabled) {
+				screenfull.request();
+			}
+		});
+	</script>
+	<script type="text/javascript">
+		var doRedirect = !result.server || !result.streamPort || !result.ctrlPort;
+		var confServer = fetchParam(result.server, 'Adres serwera nasłuchującego', '192.168.1.100');
+		var confStreamPort = fetchParam(result.streamPort, 'Port streamu', '8082');
+		var confCtrlPort = fetchParam(result.ctrlPort, 'Port nasłuchiwania komend', '8083');
+	</script>
+	<script type="text/javascript">
+		if (doRedirect) {
+			var redirUrl = document.location.origin + document.location.pathname + '?';
+			var redirParams = {
+				server: confServer,
+				streamPort: confStreamPort,
+				ctrlPort: confCtrlPort
+			};
+
+			var redirQuery = "";
+			for (var redirParam in redirParams) {
+				if (redirQuery != "") {
+					redirQuery += "&";
+				}
+
+				redirQuery += redirParam + "=" + encodeURIComponent(redirParams[redirParam]);
+			}
+
+			window.location = redirUrl + redirQuery;
+		}
+	</script>
+	<script type="text/javascript">
+		var canvas = document.getElementById('stdvideo');
+		var url = 'ws://' + confServer + ':' + confStreamPort + '/';
+		var player = new JSMpeg.Player(url, {canvas: canvas});
+	</script>
+	<script type="text/javascript">
+		window.addEventListener("gamepadconnected", function(e) {
+			console.log("gamepad connected");
+		});
+
+		window.addEventListener("gamepaddisconnected", function(e) {
+			console.log("gamepad disconnected");
+		});
+
+		function mapGamepadStateToKeys(gamepad) {
+			return {
+				// TODO this map is probably specific to my pad only
+				dpad_l: gamepad.axes[3] > 0.1,
+				dpad_r: gamepad.axes[4] > 0.1,
+				dpad_t: gamepad.axes[9] < -0.9,
+				dpad_d: gamepad.axes[9] < 0.5 && gamepad.axes[9] > 0.1,
+
+				joyL_l: gamepad.axes[0] < -0.5,  // -1 left; 1 right
+				joyL_r: gamepad.axes[0] > 0.5,
+				joyL_t: gamepad.axes[1] < -0.5, // -1 up; 1 down
+				joyL_d: gamepad.axes[1] > 0.5,
+
+				joyR_l: gamepad.axes[2] < -0.5, // -1 left; 1 right
+				joyR_r: gamepad.axes[2] > 0.5,
+				joyR_t: gamepad.axes[5] < -0.5, // -1 up; 1 down
+				joyR_d: gamepad.axes[5] > 0.5,
+
+				x: gamepad.buttons[3].value,
+				y: gamepad.buttons[4].value,
+				a: gamepad.buttons[0].value,
+				b: gamepad.buttons[1].value,
+				select: gamepad.buttons[10].value,
+				start: gamepad.buttons[11].value
+			};
+		}
+
+		function mapGamepadKeysToCommands(x) {
+			var commands = [];
+
+			for (var key in x) {
+				if (x[key]) {
+					commands.push(key);
+				}
+			}
+
+			return commands;
+		}
+	</script>
+	<script type="text/javascript">
+		var vpad = {};
+		jQuery(document).ready(function(){
+			jQuery('.button').each(function(){
+				var $this = jQuery(this);
+				var id = $this.attr('id');
+
+				$this.on('mousedown touchstart', function() {
+					vpad[id] = 1;
+				});
+
+				$this.on('mouseleave mouseup touchend ', function() {
+					vpad[id] = 0;
+				});
+			});
+		});
+	</script>
+	<script type="text/javascript">
+		// connect command feeder
+		var ctrlWs = new WebSocket('ws://' + confServer + ':' + confCtrlPort + '/');
+		ctrlWs.onopen = function open() {
+			ctrlWs.send('EHLOPAD');
+		}
+	</script>
+	<script type="text/javascript">
+		// integrate pad with websocket
+
+		if (navigator.getGamepads) {
+			setInterval(function() {
+				var keys = {};
+
+				var gamepad = navigator.getGamepads()[0];
+				if (gamepad) {
+					keys = mapGamepadStateToKeys(gamepad);
+				}
+
+				for (var key in vpad) {
+					if (vpad[key]) {
+						keys[key] = vpad[key];
+					}
+				}
+
+				var commands = mapGamepadKeysToCommands(keys);
+				if (commands.length) {
+					// console.log(commands);
+				}
+
+				for (var i=0; i<commands.length; i++) {
+					ctrlWs.send(commands[i]);
+				}
+			}, 100);
+		}
+		else {
+			console.warn('gamepad api not accessible');
+		}
+	</script>
+	<script type="text/javascript">
+		console.log('aplication initialized');
+	</script>
+</body>
+</html>
