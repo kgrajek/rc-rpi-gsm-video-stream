@@ -1,2 +1,2 @@
-require('./cli/server.js');
-require('./cli/stream.js');
+require('./rpi/server.js');
+// require('./rpi/stream.js');

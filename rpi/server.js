@@ -37,6 +37,11 @@ ws.on('open', function open() {
 });
 
 ws.on('message', function incoming(data, flags) {
+	if (data.length > 10) {
+		console.error('received non command frame');
+		return;
+	}
+
 	if (data === 'SHIPEHLO') {
 		console.info('... SHIPEHLO Received. Connected. Waiting for commands');
 	}

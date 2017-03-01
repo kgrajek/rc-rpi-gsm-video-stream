@@ -1,19 +1,20 @@
 {
   "name": "rc-rpi-gsm-video-stream",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "GSM Remote controlled - video streaming - vehicle",
   "main": "index.js",
   "scripts": {
-    "start": "./run-on-srv --httpPort=8080 --streamPort=8081 --feedPort=8082 --ctrlPort=8083 --secret=dupa123",
+    "start": "node run-on-srv.js --httpPort=8080 --streamPort=8081 --feedPort=8082 --ctrlPort=8083 --secret=dupa123",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/kgrajek/rc-rpi-gsm-video-stream"
-},
+  },
   "license": "ISC",
   "dependencies": {
     "connect": "^3.6.0",
+    "express": "^4.14.1",
     "jquery": "^3.1.1",
     "serve-static": "^1.11.2",
     "ws": "^1.1.2",

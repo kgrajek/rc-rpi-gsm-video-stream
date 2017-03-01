@@ -23,7 +23,7 @@
 
 		#console {
 			width: 100%;
-			height: 25vh;
+			height: 35vh;
 			text-align: left;
 		}
 
@@ -33,12 +33,12 @@
 			max-width: 50cm;
 			margin-left: auto;
 			margin-right: auto;
-			height: 35vh;
+			height: 25vh;
 		}
 		.button {
 			position: absolute;
 			width: 25%;
-			height: 33.3%;
+			height: 50%;
 			line-height: 50%;
 			font-size: 100%;
 			padding: 0;
@@ -68,24 +68,26 @@
 		<button id="dpad_t" class="button" style="top:0%; left:50%;">▲</button>
 		<button id="dpad_d" class="button" style="top:0%; left:75%;">▼</button>
 
-		<button id="joyL_l" class="button" style="top:33.3%; left:0%;">◀</button>
-		<button id="joyL_r" class="button" style="top:33.3%; left:25%;">▶</button>
-		<button id="joyL_t" class="button" style="top:33.3%;  left:50%;">▲</button>
-		<button id="joyL_d" class="button" style="top:33.3%; left:75%;">▼</button>
+		<button id="joyL_l" class="button" style="top:50%; left:0%;">◀</button>
+		<button id="joyL_r" class="button" style="top:50%; left:25%;">▶</button>
+		<button id="joyL_t" class="button" style="top:50%; left:50%;">▲</button>
+		<button id="joyL_d" class="button" style="top:50%; left:75%;">▼</button>
 
-		<button id="x" class="button" style="top:66.6%;  left:0%;">X</button>
-		<button id="y" class="button" style="top:66.6%;  left:25%;">Y</button>
+		<!--
+		<button id="x" class="button" style="top:66.6%; left:0%;">X</button>
+		<button id="y" class="button" style="top:66.6%; left:25%;">Y</button>
 		<button id="a" class="button" style="top:66.6%; left:50%;">A</button>
 		<button id="b" class="button" style="top:66.6%; left:75%;">B</button>
+		-->
 	</div>
 
 	<script type="text/javascript" src="libs/jsmpeg.min.js"></script>
 	<script type="text/javascript" src="libs/console.js"></script>
+	<script type="text/javascript" src="npmlibs/screenfull/dist/screenfull.js"></script>
+	<script type="text/javascript" src="npmlibs/jquery/dist/jquery.min.js"></script>
 	<script type="text/javascript">
 		consoleapi$initialize(document.getElementById('console'));
 	</script>
-	<script type="text/javascript" src="npmlibs/screenfull/dist/screenfull.js"></script>
-	<script type="text/javascript" src="npmlibs/jquery/dist/jquery.min.js"></script>
 	<script type="text/javascript">
 		var query = location.search.substr(1);
 		var result = {};
@@ -112,18 +114,16 @@
 		});
 	</script>
 	<script type="text/javascript">
-		var doRedirect = !result.server || !result.streamPort || !result.ctrlPort;
+		var doRedirect = !result.server || !result.port;
 		var confServer = fetchParam(result.server, 'Adres serwera nasłuchującego', '192.168.1.100');
-		var confStreamPort = fetchParam(result.streamPort, 'Port streamu', '8082');
-		var confCtrlPort = fetchParam(result.ctrlPort, 'Port nasłuchiwania komend', '8083');
+		var confPort = fetchParam(result.port, 'Port', '8080');
 	</script>
 	<script type="text/javascript">
 		if (doRedirect) {
 			var redirUrl = document.location.origin + document.location.pathname + '?';
 			var redirParams = {
 				server: confServer,
-				streamPort: confStreamPort,
-				ctrlPort: confCtrlPort
+				port: confPort
 			};
 
 			var redirQuery = "";
@@ -140,8 +140,20 @@
 	</script>
 	<script type="text/javascript">
 		var canvas = document.getElementById('stdvideo');
-		var url = 'ws://' + confServer + ':' + confStreamPort + '/';
-		var player = new JSMpeg.Player(url, {canvas: canvas});
+		var url = 'ws://' + confServer + ':' + confPort + '/';
+		var player = new JSMpeg.Player(url, { canvas:canvas });
+
+		var socketWait = setInterval(
+			function() {
+				console.log('... waiting to connect to: ', confServer + ':' + confPort);
+				if (player.source.socket.readyState === 1) {
+					console.log('...connected');
+					player.source.socket.send('EHLOPAD'); // TODO async
+					clearInterval(socketWait);
+				}
+			},
+			100
+		);
 	</script>
 	<script type="text/javascript">
 		window.addEventListener("gamepadconnected", function(e) {
@@ -210,10 +222,18 @@
 	</script>
 	<script type="text/javascript">
 		// connect command feeder
-		var ctrlWs = new WebSocket('ws://' + confServer + ':' + confCtrlPort + '/');
-		ctrlWs.onopen = function open() {
-			ctrlWs.send('EHLOPAD');
-		}
+		/*var ctrlWsUrl = 'ws://' + confServer + ':' + confPort + '/';
+		console.log(ctrlWsUrl);
+		setTimeout(function() {
+			var ctrlWs = new WebSocket(ctrlWsUrl);
+			ctrlWs.onopen = function open() {
+				ctrlWs.send('EHLOPAD');
+			};
+			ctrlWs.onmessage = function (event) {
+				console.log(event.data);
+			}
+
+		}, 2000)*/
 	</script>
 	<script type="text/javascript">
 		// integrate pad with websocket
@@ -239,7 +259,8 @@
 				}
 
 				for (var i=0; i<commands.length; i++) {
-					ctrlWs.send(commands[i]);
+					player.source.socket.send('!!' + commands[i]);
+					//ctrlWs.send();
 				}
 			}, 100);
 		}

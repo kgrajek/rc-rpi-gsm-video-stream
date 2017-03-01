@@ -1,121 +1,207 @@
-var fs = require('fs');
-var http = require('http');
-var WebSocket = require('ws');
-var connect = require('connect');
-var serveStatic = require('serve-static');
+
+/// INITIALIZATION CODE ////////////////////////////////////////////////////////
+
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+const url = require('url');
+const SocketServer = require('ws').Server;
 
 const argv = require('yargs')
-	.option('secret', { aliXas: 's', describe: 'secret to make sure that no one else will stream' })
-	.option('httpPort', { alXias: 'p', describe: 'might be omited' })
-	.option('streamPort', { aXlias: 'p', describe: 'port' })
-	.option('feedPort', { aliaXs: 'p', describe: 'port' })
-	.option('ctrlPort', { aliaXs: 'p', describe: 'port' })
-	.demandOption(['secret', 'streamPort', 'feedPort', 'ctrlPort'], 'Please provide both run and path arguments to work with this tool')
-	//.default({ httpPort: 8080 streamPort: 10, feedPort : ctrlPort })
+	.option('secret', { alias: 's', describe: 'secret to make sure that no one else will stream' })
+	.option('port', { alias: 'p', describe: 'port to start application' })
+	.demandOption(['secret', 'port'], 'Please provide both secret and port arguments to work with this tool')
 	.help()
 	.argv;
 
-var STREAM_SECRET = argv.secret;
-var HTTP_PORT = argv.httpPort;
-var STREAM_PORT = argv.streamPort;
-var WEBSOCKET_PORT = argv.feedPort;
-var CONTROLL_SERVER = argv.ctrlPort;
-var RECORD_STREAM = false;
+if (argv.port === 'auto' || !argv.port) {
+	argv.port = process.env.PORT;
+}
 
-// http server
+if (!argv.port) {
+	argv.port = 8080;
+}
 
-if (HTTP_PORT) {
-	connect().use(serveStatic(__dirname+'/../')).listen(HTTP_PORT, function(){
-	    console.log('Server running on ' + HTTP_PORT + '...');
+/// UTILITY FUNCTIONS //////////////////////////////////////////////////////////
+
+function dictExtensionToMime(ext) {
+	const mimeMap = {
+		'ico': 'image/x-icon',
+		'html': 'text/html',
+		'js': 'text/javascript',
+		'json': 'application/json',
+		'css': 'text/css',
+		'png': 'image/png',
+		'jpg': 'image/jpeg',
+		'wav': 'audio/wav',
+		'mp3': 'audio/mpeg',
+		'svg': 'image/svg+xml'
+	};
+
+	return mimeMap[ ext ];
+}
+
+function broadcastMessage(wss, type, content) {
+	wss.clients.forEach(function each(client) {
+		if (client.readyState !== 1) { // WebSocket.OPEN) {\
+			return;
+		}
+
+		if (
+			00
+			|| ( type === 'command' && client._EHLOTYPE === 'SHIP')
+			|| ( type === 'video'   && client._EHLOTYPE === 'PAD')
+			|| ( type === 'comment' && client._EHLOTYPE === 'PAD')
+			|| ( type === 'ping')
+		) {
+			client.send(content);
+		}
 	});
 }
 
-// Leechers of video server
+function rejectHttpRequest(res, httpStatusCode, message) {
+	res.statusCode = httpStatusCode;
+	res.end(message);
+	return;
+}
 
-var socketServer = new WebSocket.Server({ port:WEBSOCKET_PORT, perMessageDeflate:false });
-socketServer.connectionCount = 0;
-socketServer.on('connection', function(socket) {
-	socketServer.connectionCount++;
-	console.log(
-		'New WebSocket Connection: ',
-		socket.upgradeReq.socket.remoteAddress,
-		socket.upgradeReq.headers['user-agent'],
-		'(' + socketServer.connectionCount + ' total)'
-	);
-	socket.on('close', function(code, message){
-		socketServer.connectionCount--;
-		console.log(
-			'Disconnected WebSocket (' + socketServer.connectionCount + ' total)'
-		);
-	});
-});
-socketServer.broadcast = function(data) {
-	socketServer.clients.forEach(function each(client) {
-		if (client.readyState === WebSocket.OPEN) {
-			client.send(data);
+function getFilepathFromUrl(url) {
+	const qmarkPos = url.indexOf('?');
+	if (qmarkPos >= 0) {
+		return url.substr(0, qmarkPos);
+	}
+
+	return url;
+}
+
+function parseMessage(msg) {
+	// type: ping,ehlo,log,command,video
+
+	if (typeof msg === 'string') {
+		if (msg === 'SRVPING') {
+			return {
+				type: 'ping',
+				content: 1
+			}
 		}
-	});
-};
-
-// Command broadcaster
-
-var commandServer = new WebSocket.Server({port: CONTROLL_SERVER, perMessageDeflate: false});
-commandServer.on('connection', function connection(ws) {
-	ws.on('message', function incoming(data) {
-		if (data === 'EHLOSHIP') {
-			ws.send('SHIPEHLO')
-		}
-		else {
-			// Broadcast to everyone else.
-			commandServer.clients.forEach(function each(client) {
-				console.log('broadcasting:', data);
-				if (client !== ws && client.readyState === WebSocket.OPEN) {
-					client.send(data);
+		else if (msg.substr(0, 4) === 'EHLO') {
+			var match = msg.match(/^EHLO([A-Z]{3,5})/);
+			if (match) {
+				return {
+					type: 'ehlo',
+					content: match[1]
 				}
-			});
+			}
 		}
-	});
-});
+		else if (msg.substring(0, 2) === '//') {
+			return {
+				type: 'log',
+				content: msg.substr(2)
+			}
+		}
+		else if (msg.substring(0, 2) === '!!') {
+			return {
+				type: 'command',
+				content: msg.substr(2)
+			}
+		}
+	}
+	else if (typeof msg === 'object' && msg.length > 30) {
+		return {
+			type: 'video',
+			content: msg
+		}
+	}
+
+	console.warn('Not parsed message:', msg.length, typeof msg);
+}
+
+/// SERVER /////////////////////////////////////////////////////////////////////
 
 // HTTP Server to accept incomming MPEG-TS Stream from ffmpeg
-var streamServer = http.createServer(function(request, response) {
-	var params = request.url.substr(1).split('/');
+const httpServer = http.createServer(function(req, res) {
+	// TODO limit to /srv/
+	var params = req.url.substr(1).split('/');
+	if (params[0] === 'streamUpload') {
+		if (params[1] !== argv.secret) {
+			return rejectHttpRequest(res, 401, `Bad secret. Rejecting: ${req.socket.remoteAddress}:${req.socket.remotePort}`);
+		}
 
-	if (params[0] !== STREAM_SECRET) {
-		console.log(
-			'Failed Stream Connection: '+ request.socket.remoteAddress + ':' +
-			request.socket.remotePort + ' - wrong secret.'
-		);
-		response.end();
+		console.log(`Stream Connected: ${req.socket.remoteAddress}:${req.socket.remotePort}`);
+
+		res.connection.setTimeout(0);
+		req.on('data', function(data) {
+			var msg = parseMessage(data);
+			if (msg) {
+				broadcastMessage(wsServer, msg.type, msg.content);
+			}
+		});
+
+		req.on('end',function(){
+			console.log(`Disconected: ${req.socket.remoteAddress}:${req.socket.remotePort}`);
+		});
 	}
+	else {
+		if (req.method !== 'GET') {
+			return rejectHttpRequest(res, 400, `Not supported method: ${req.method}!`);
+		}
 
-	response.connection.setTimeout(0);
-	console.log(
-		'Stream Connected: ' +
-		request.socket.remoteAddress + ':' +
-		request.socket.remotePort
-	);
-	request.on('data', function(data){
-		socketServer.broadcast(data);
-		if (request.socket.recording) {
-			request.socket.recording.write(data);
+		const relfilepath = getFilepathFromUrl(req.url);
+		const filepath = __dirname + relfilepath;
+		const fileext = relfilepath.split('.').pop();
+
+		fs.exists(filepath, function (exist) {
+			if (!exist) {
+				return rejectHttpRequest(res, 404, `File ${relfilepath} not found!`);
+			}
+
+			if (fs.statSync(filepath).isDirectory()) {
+				return rejectHttpRequest(res, 404, `File ${relfilepath} not found!`);
+			}
+
+			// read file from file system
+			fs.readFile(filepath, function(err, data) {
+				if (err) {
+					return rejectHttpRequest(res, 500, `Error getting the file: ${err}.`);
+				}
+
+				res.setHeader('Content-type', dictExtensionToMime(fileext) || 'text/plain' );
+				res.end(data);
+			});
+		});
+	}
+}).listen(argv.port, function() {
+	console.log(`HTTP Server Listening on: ${argv.port}`);
+});
+
+const wsServer = new SocketServer({ server: httpServer });
+
+wsServer.on('connection', function(socket) {
+	const address = socket._socket.address();
+	console.log(`Client connected: ${address.address}:${address.port}`);
+
+	socket.on('message', function incoming(data) {
+		var msgh = parseMessage(data);
+		if (msgh) {
+			if (msgh.type === 'ehlo') {
+				console.log('New device:', msgh.content);
+				socket._EHLOTYPE = msgh.content;
+				return;
+			}
+
+			broadcastMessage(wsServer, msgh.type, msgh.content);
 		}
 	});
-	request.on('end',function(){
-		console.log('close');
-		if (request.socket.recording) {
-			request.socket.recording.close();
-		}
+
+	socket.on('close', function() {
+		console.log('Client disconnected');
 	});
+});
 
-	// Record the stream to a local file?
-	if (RECORD_STREAM) {
-		var path = 'recordings/' + Date.now() + '.ts';
-		request.socket.recording = fs.createWriteStream(path);
-	}
-}).listen(STREAM_PORT);
+setInterval(function() {
+	wsServer.clients.forEach(function (socket) {
+		socket.send('SRVPING');
+	});
+}, 1000 * 5);
 
-
-console.log('Listening for incomming MPEG-TS Stream on http://127.0.0.1:' + STREAM_PORT + '/<secret>');
-console.log('Awaiting WebSocket commands connections on ws://127.0.0.1::' + CONTROLL_SERVER + '/');
-console.log('Awaiting WebSocket video leechers connections on ws://127.0.0.1:' + WEBSOCKET_PORT + '/');
+/// THE END ////////////////////////////////////////////////////////////////////
