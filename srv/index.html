@@ -140,7 +140,7 @@
 	</script>
 	<script type="text/javascript">
 		var canvas = document.getElementById('stdvideo');
-		var url = 'wss://' + confServer + ':' + confPort + '/';
+		var url = 'wss://' + confServer; //  + ':' + confPort + '/'; // TODO conditionaly switch ws / wss TODO dont use port on heroku
 		var player = new JSMpeg.Player(url, { canvas:canvas });
 
 		var socketWait = setInterval(
