@@ -140,7 +140,7 @@
 	</script>
 	<script type="text/javascript">
 		var canvas = document.getElementById('stdvideo');
-		var url = 'ws://' + confServer + ':' + confPort + '/';
+		var url = 'wss://' + confServer + ':' + confPort + '/';
 		var player = new JSMpeg.Player(url, { canvas:canvas });
 
 		var socketWait = setInterval(
