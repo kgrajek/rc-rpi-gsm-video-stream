@@ -10,7 +10,6 @@ const SocketServer = require('ws').Server;
 const argv = require('yargs')
 	.option('secret', { alias: 's', describe: 'secret to make sure that no one else will stream' })
 	.option('port', { alias: 'p', describe: 'port to start application' })
-	.demandOption(['secret', 'port'], 'Please provide both secret and port arguments to work with this tool')
 	.help()
 	.argv;
 
