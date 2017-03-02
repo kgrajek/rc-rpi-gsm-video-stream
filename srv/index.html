@@ -122,7 +122,7 @@
 	<script type="text/javascript">
 		var doRedirect = !result.server || !result.port;
 		var confServer = fetchParam(result.server, 'Adres serwera nasłuchującego', location.protocol + '//' + location.hostname);
-		var confPort = fetchParam(result.port, 'Port', location.port);
+		var confPort = fetchParam(result.port, 'Port', location.port || 80);
 	</script>
 	<script type="text/javascript">
 		if (doRedirect) {
@@ -151,17 +151,22 @@
 		var url = socketUrl  + ':' + confPort + '/';
 		var player = new JSMpeg.Player(url, { canvas:canvas });
 
-		var socketWait = setInterval(
-			function() {
-				console.log('... waiting to connect to: ', confServer + ':' + confPort);
-				if (player.source.socket.readyState === 1) {
-					console.log('...connected');
-					player.source.socket.send('EHLOPAD'); // TODO async
-					clearInterval(socketWait);
-				}
-			},
-			1000
-		);
+		if (player && player.source.socket && player.source.socket) {
+			var socketWait = setInterval(
+				function() {
+					console.log('... waiting to connect to: ', confServer + ':' + confPort);
+					if (player.source.socket.readyState === 1) {
+						console.log('...connected');
+						player.source.socket.send('EHLOPAD'); // TODO async
+						clearInterval(socketWait);
+					}
+				},
+				1000
+			);
+		}
+		else {
+			console.error('# connection/player initialization failed');
+		}
 	</script>
 	<script type="text/javascript">
 		window.addEventListener("gamepadconnected", function(e) {
