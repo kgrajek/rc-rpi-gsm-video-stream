@@ -105,6 +105,12 @@
 
 			return value;
 		}
+		function envIsOnHttps() {
+			return location.protocol === 'https:' ? true : false;
+		}
+		function changeProtocol(protocol, url) {
+			return url.replace(/^\w{2,5}:\/\//, protocol + '://');
+		}
 	</script>
 	<script type="text/javascript">
 		document.getElementById('fullscreen').addEventListener('click', function() {
@@ -115,8 +121,8 @@
 	</script>
 	<script type="text/javascript">
 		var doRedirect = !result.server || !result.port;
-		var confServer = fetchParam(result.server, 'Adres serwera nasłuchującego', '192.168.1.100');
-		var confPort = fetchParam(result.port, 'Port', '8080');
+		var confServer = fetchParam(result.server, 'Adres serwera nasłuchującego', location.protocol + '//' + location.hostname);
+		var confPort = fetchParam(result.port, 'Port', location.port);
 	</script>
 	<script type="text/javascript">
 		if (doRedirect) {
@@ -140,7 +146,9 @@
 	</script>
 	<script type="text/javascript">
 		var canvas = document.getElementById('stdvideo');
-		var url = 'wss://' + confServer; //  + ':' + confPort + '/'; // TODO conditionaly switch ws / wss TODO dont use port on heroku
+		var isHttps = envIsOnHttps();
+		var socketUrl = changeProtocol(isHttps ? 'wss' : 'ws', confServer);
+		var url = socketUrl  + ':' + confPort + '/';
 		var player = new JSMpeg.Player(url, { canvas:canvas });
 
 		var socketWait = setInterval(
