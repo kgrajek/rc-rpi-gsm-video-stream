@@ -98,8 +98,12 @@
 		});
 	</script>
 	<script type="text/javascript">
-		function fetchParam(value, missingText, defaultValue) {
-			return window.prompt(missingText, defaultValue);
+		function fetchParam(value, dontAsk, missingText, defaultValue) {
+			if (!value && !dontAsk) {
+				return window.prompt(missingText, defaultValue);
+			}
+
+			return value;
 		}
 		function envIsOnHttps() {
 			return location.protocol === 'https:' ? true : false;
@@ -117,10 +121,9 @@
 	</script>
 	<script type="text/javascript">
 		var doRedirect = !result.server;
-		if (doRedirect) {
-			var confServer = fetchParam(result.server, 'Adres serwera nasłuchującego', location.protocol + '//' + location.hostname);
-			var confPort = fetchParam(result.port, 'Port', location.port);
-		}
+		var dontAsk = !doRedirect;
+		var confServer = fetchParam(result.server, dontAsk, 'Adres serwera nasłuchującego', location.protocol + '//' + location.hostname);
+		var confPort = fetchParam(result.port, dontAsk, 'Port', location.port);
 	</script>
 	<script type="text/javascript">
 		if (doRedirect) {
