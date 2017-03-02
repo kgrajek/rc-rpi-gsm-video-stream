@@ -99,11 +99,7 @@
 	</script>
 	<script type="text/javascript">
 		function fetchParam(value, missingText, defaultValue) {
-			if (!value) {
-				return window.prompt(missingText, defaultValue);
-			}
-
-			return value;
+			return window.prompt(missingText, defaultValue);
 		}
 		function envIsOnHttps() {
 			return location.protocol === 'https:' ? true : false;
@@ -121,8 +117,10 @@
 	</script>
 	<script type="text/javascript">
 		var doRedirect = !result.server;
-		var confServer = fetchParam(result.server, 'Adres serwera nasłuchującego', location.protocol + '//' + location.hostname);
-		var confPort = fetchParam(result.port, 'Port', location.port);
+		if (doRedirect) {
+			var confServer = fetchParam(result.server, 'Adres serwera nasłuchującego', location.protocol + '//' + location.hostname);
+			var confPort = fetchParam(result.port, 'Port', location.port);
+		}
 	</script>
 	<script type="text/javascript">
 		if (doRedirect) {
@@ -148,7 +146,7 @@
 		var canvas = document.getElementById('stdvideo');
 		var isHttps = envIsOnHttps();
 		var socketUrl = changeProtocol(isHttps ? 'wss' : 'ws', confServer);
-		var url = socketUrl  + ':' + confPort + '/';
+		var url = socketUrl  + ( confPort ? ':' + confPort + '/' : '');
 		var player = new JSMpeg.Player(url, { canvas:canvas });
 
 		if (player && player.source.socket && player.source.socket) {
