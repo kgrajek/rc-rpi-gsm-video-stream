@@ -120,9 +120,9 @@
 		});
 	</script>
 	<script type="text/javascript">
-		var doRedirect = !result.server || !result.port;
+		var doRedirect = !result.server;
 		var confServer = fetchParam(result.server, 'Adres serwera nasłuchującego', location.protocol + '//' + location.hostname);
-		var confPort = fetchParam(result.port, 'Port', location.port || 80);
+		var confPort = fetchParam(result.port, 'Port', location.port);
 	</script>
 	<script type="text/javascript">
 		if (doRedirect) {
