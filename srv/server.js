@@ -145,7 +145,11 @@ const httpServer = http.createServer(function(req, res) {
 			return rejectHttpRequest(res, 400, `Not supported method: ${req.method}!`);
 		}
 
-		const relfilepath = getFilepathFromUrl(req.url);
+		let relfilepath = getFilepathFromUrl(req.url);
+		if (!relfilepath || relfilepath === '/') {
+			relfilepath = '/index.html';
+		}
+
 		const filepath = __dirname + relfilepath;
 		const fileext = relfilepath.split('.').pop();
 
