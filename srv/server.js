@@ -50,8 +50,7 @@ function broadcastMessage(wss, type, content) {
 			00
 			|| ( type === 'command' && client._EHLOTYPE === 'SHIP')
 			|| ( type === 'video'   && client._EHLOTYPE === 'PAD')
-			|| ( type === 'comment' && client._EHLOTYPE === 'PAD')
-			|| ( type === 'ping')
+			|| ( type === 'log'     && client._EHLOTYPE === 'PAD')
 		) {
 			client.send(content);
 		}
@@ -77,13 +76,7 @@ function parseMessage(msg) {
 	// type: ping,ehlo,log,command,video
 
 	if (typeof msg === 'string') {
-		if (msg === 'SRVPING') {
-			return {
-				type: 'ping',
-				content: 1
-			}
-		}
-		else if (msg.substr(0, 4) === 'EHLO') {
+		if (msg.substr(0, 4) === 'EHLO') {
 			var match = msg.match(/^EHLO([A-Z]{3,5})/);
 			if (match) {
 				return {
@@ -92,16 +85,16 @@ function parseMessage(msg) {
 				}
 			}
 		}
-		else if (msg.substring(0, 2) === '//') {
+		else if (msg.substring(0, 2) === '$ ') {
 			return {
 				type: 'log',
-				content: msg.substr(2)
+				content: msg
 			}
 		}
-		else if (msg.substring(0, 2) === '!!') {
+		else if (msg.substring(0, 2) === '! ') {
 			return {
 				type: 'command',
-				content: msg.substr(2)
+				content: msg
 			}
 		}
 	}
@@ -112,7 +105,7 @@ function parseMessage(msg) {
 		}
 	}
 
-	console.warn('Not parsed message:', msg.length, typeof msg);
+	console.warn('Not parsed message:', msg.length, typeof msg === 'string' ? msg : typeof msg);
 }
 
 /// SERVER /////////////////////////////////////////////////////////////////////
@@ -201,11 +194,5 @@ wsServer.on('connection', function(socket) {
 		console.log('Client disconnected');
 	});
 });
-
-setInterval(function() {
-	wsServer.clients.forEach(function (socket) {
-		socket.send('SRVPING');
-	});
-}, 1000 * 5);
 
 /// THE END ////////////////////////////////////////////////////////////////////

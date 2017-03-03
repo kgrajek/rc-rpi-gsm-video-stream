@@ -13,17 +13,17 @@ function consoleapi$initialize(div) {
 	};
 
 	console.info = function(msg) {
-		fake$console(div, 'info', msg);
+		fake$console(div, 'inf', msg);
 		original.info.apply(console, arguments);
 	};
 
 	console.warn = function(msg) {
-		fake$console(div, 'warn', msg);
+		fake$console(div, 'wrn', msg);
 		original.warn.apply(console, arguments);
 	};
 
 	console.error = function(msg) {
-		fake$console(div, 'error', msg);
+		fake$console(div, 'err', msg);
 		original.error.apply(console, arguments);
 	};
 
@@ -31,7 +31,7 @@ function consoleapi$initialize(div) {
 		var extra = !col ? '' : '\ncolumn: ' + col;
 		extra += !error ? '' : '\nerror: ' + error;
 
-		fake$console(div, 'exception', msg);
+		fake$console(div, 'exc', msg);
 		original.error.apply(console, 'ex: ' + msg);
 
 		var suppressErrorAlert = true;
@@ -50,13 +50,13 @@ function fake$console(div, type, msg) {
 	else if (type === 'log') {
 		var color = 'white';
 	}
-	else if (type === 'info') {
+	else if (type === 'inf') {
 		var color = 'white';
 	}
-	else if (type === 'warn') {
+	else if (type === 'wrn') {
 		var color = 'orange';
 	}
-	else if (type === 'ex') {
+	else if (type === 'exc') {
 		var color = 'red';
 		var background = 'white';
 	}

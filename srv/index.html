@@ -163,16 +163,16 @@
 			}
 		}
 		function handle_click_stop_stream() {
-			console.log('< !!' + 'stop-stream');
-			player.source.socket.send('!!' + 'stop-stream');
+			console.log('# requested: stop-stream');
+			player.source.socket.send('! stop-stream');
 		}
 		function handle_click_restart_stream() {
-			console.log('< !!' + 'restart-stream');
-			player.source.socket.send('!!' + 'restart-stream');
+			console.log('# requested:  restart-stream');
+			player.source.socket.send('! restart-stream');
 		}
 		function handle_click_request_ship_status() {
-			console.log('< !!' + 'request-ship-status');
-			player.source.socket.send('!!' + 'request-ship-status');
+			console.log('# requested:  request-ship-status');
+			player.source.socket.send('! request-ship-status');
 		}
 	</script>
 	<script type="text/javascript">
@@ -207,7 +207,15 @@
 		var socketUrl = changeProtocol(isHttps ? 'wss' : 'ws', confServer);
 		var url = socketUrl  + ( confPort ? ':' + confPort + '/' : '');
 		var player = new JSMpeg.Player(url, { canvas:canvas, interceptor:function(data) {
-			console.log('> ' + data);
+			if (data === 'PADEHLO') {
+				console.log('# ...PADEHLO received. Ready to go!');
+			}
+			else if (data.substring(0, 2) === '$ ') {
+				console.log(data);
+			}
+			else {
+				console.warn('# unknowm message:', data);
+			}
 		} });
 
 		if (player && player.source.socket && player.source.socket) {
@@ -216,6 +224,7 @@
 					console.log('# ...waiting to connect to: ' + confServer + ':' + confPort);
 					if (player.source.socket.readyState === 1) {
 						console.log('# ...connected');
+						console.log('# ...sending EHLOPAD');
 						player.source.socket.send('EHLOPAD'); // TODO async
 						clearInterval(socketWait);
 					}
@@ -331,7 +340,7 @@
 				}
 
 				for (var i=0; i<commands.length; i++) {
-					player.source.socket.send('!!' + commands[i]);
+					player.source.socket.send('! ' + commands[i]);
 				}
 			}, 100);
 		}
