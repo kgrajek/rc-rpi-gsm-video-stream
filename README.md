@@ -15,9 +15,13 @@
 -	/etc/wvdial
 
 ## Todo
+-	eventy przez refleksje
 -	wss / ws
 -	> received < send # log @ broadcast
 -	make raspberry receive SRVPING
+-	fix screenfull
+-	default index.html
+-	opakowacze na heroku logs
 -	dodanie .localconf i zeby wszystkie komendy z niego braly
 -	add panel to turn of / reset vnc, turn off reset stream, reset rpi
 -	resetowanie informacji o porcie reloadPage
@@ -38,6 +42,7 @@ https://github.com/kgrajek/rc-rpi-gsm-video-stream.git
 
 ## Future
 -	package for rotating proximity detector
+-	feature for taking photos (stop stream > take photo > start stream > upload too google) 
 -	https://botland.com.pl/ultradzwiekowe-czujniki-odleglosci/2743-ultradzwiekowy-czujnik-odleglosci-us-015-2-400-cm.html
 
 ## Subproject ideas
