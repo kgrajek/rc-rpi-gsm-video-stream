@@ -187,8 +187,9 @@ wsServer.on('connection', function(socket) {
 		var msgh = parseMessage(data);
 		if (msgh) {
 			if (msgh.type === 'ehlo') {
-				console.log('New device:', msgh.content);
+				console.log('# New device:', msgh.content);
 				socket._EHLOTYPE = msgh.content;
+				socket.send(msgh.content + 'EHLO');
 				return;
 			}
 

@@ -1,10 +1,17 @@
+var localconf = require('../localconf');
+
 const WebSocket = require('ws');
 const argv = require('yargs')
-	.option('server', { alias: 's', describe: 'addres of websocket' })
+	.option('server', { alias: 's', describe: 'addres of remote server' })
 	.option('port', { alias: 'p', describe: 'port' })
-	.demandOption(['server', 'port'], 'Please provide both run and path arguments to work with this tool')
 	.help()
-	.argv
+	.argv;
+
+
+if (!argv.server) {
+	argv.server = localconf.server;
+	argv.port = localconf.port;
+}
 
 var keyToGpio = {
 	dpad_l: 0,
@@ -30,10 +37,12 @@ var keyToGpio = {
 	start: null
 };
 
-const ws = new WebSocket('ws://' + argv.server + ':' + argv.port);
+console.log(`# conecting to: ${argv.server}:${argv.port}`);
+
+const ws = new WebSocket(argv.server + ':' + argv.port);
 ws.on('open', function open() {
 	ws.send('EHLOSHIP');
-	console.info('Send EHLOSHIP. Waiting for SHIPEHLO ...');
+	console.info('# Send EHLOSHIP. Waiting for SHIPEHLO ...');
 });
 
 ws.on('message', function incoming(data, flags) {
@@ -43,7 +52,9 @@ ws.on('message', function incoming(data, flags) {
 	}
 
 	if (data === 'SHIPEHLO') {
-		console.info('... SHIPEHLO Received. Connected. Waiting for commands');
+		console.info('# ... SHIPEHLO Received. Connected. Waiting for commands');
+	}
+	else if (data === 'SRVPING') {
 	}
 	else {
 		var gpio = keyToGpio[ data ];

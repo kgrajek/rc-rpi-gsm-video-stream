@@ -1,6 +1,4 @@
-var config = {};
-
-config.server = 'mighty-peak-93491.herokuapp.com';
-config.port = 80;
-
-module.exports = config;
+{
+	"server": "ws://example.com",
+	"port": 80
+}
