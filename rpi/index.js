@@ -33,10 +33,14 @@ var keyToGpio = {
 
 /// INITIALIZE GPIO ////////////////////////////////////////////////////////////
 
-for (var k in keyToGpio) {
+for (var k in keyToGpio) { // TODO move to handle
 	var gpioh = keyToGpio[ k ];
 
-	gpio.setup(gpioh.num, gpio.DIR_OUT);
+	gpio.setup(gpioh.num, gpio.DIR_OUT, function(err) {
+		if (err) {
+			console.error(`# error while initializing gpio ${gpioh.num}`, err);
+		}
+	});
 }
 
 /// command handlers ///////////////////////////////////////////////////////////

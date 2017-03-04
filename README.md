@@ -24,6 +24,7 @@
 -
 
 ## Todo
+-	add command which will cause error on rpi
 -	add stoping stream on server when last client disconnects
 -	add stoping stream to rpi if no commands were sent in x minutes
 -	initialize and destroy pins should be as methods to allow remote reseting

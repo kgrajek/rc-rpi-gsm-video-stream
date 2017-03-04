@@ -257,7 +257,7 @@
 					if (vpad[id] === 2) {
 						vpad[id] = 0;
 					}
-					else {
+					else if (vpad[id] === 1) {
 						vpad[id] = 0.5; // in such
 					}
 				});
@@ -267,7 +267,7 @@
 	<script type="text/javascript">
 		setInterval(function() {
 			for (var key in vpad) {
-				if (vpad[key] === 1) {
+				if (vpad[key] >= 1) {
 					vpad[key] = 2;
 					player.source.socket.send('! ' + key);
 				}
