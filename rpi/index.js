@@ -36,7 +36,7 @@ var keyToGpio = {
 for (var k in keyToGpio) {
 	var gpioh = keyToGpio[ k ];
 
-	gpio.setup(gpioh.gpio, gpio.DIR_OUT);
+	gpio.setup(gpioh.num, gpio.DIR_OUT);
 }
 
 /// command handlers ///////////////////////////////////////////////////////////
@@ -235,10 +235,9 @@ ws.on('message', function incoming(data, flags) {
 					if (gpioh.value !== true) {
 						ws.send(`$ activate ${command}`);
 						console.log(`# activate ${command}`);
+						gpioh.value = true;
+						gpioSet(gpnum, 1, ws);
 					}
-
-					gpioh.value = true;
-					gpioSet(gpnum, 1, ws);
 
 					gpioh.tid = setTimeout(
 						function() {
