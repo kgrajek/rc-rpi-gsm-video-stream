@@ -61,7 +61,7 @@ var handlers = {
 		socket.send('$ ship is probably ok');
 	},
 	handle_unload_video_driver: function(socket) {
-		exec(localconf.command:unloadDriver, function(error, stdout, stderr) {
+		exec(localconf['command:unloadDriver'], function(error, stdout, stderr) {
 			if (err) {
 				console.log('# unloading driver failed');
 				socket.send('$ unloading driver failed');
@@ -73,7 +73,7 @@ var handlers = {
 		});
 	},
 	handle_load_video_driver: function(socket) {
-		exec(localconf.command:unloadDriver, function(error, stdout, stderr) {
+		exec(localconf['command:unloadDriver'], function(error, stdout, stderr) {
 			if (err) {
 				console.log('# loading driver failed');
 				socket.send('$ loading driver failed');
@@ -114,6 +114,10 @@ function createExternalCommand(localconfCommand, logAlias, socket) {
 			console.log(`${logAlias} stdout: ${data}`);
 		});
 		child.stderr.on('data', function(data) {
+			if (data.indexOf('frame=') >= 0 && data.indexOf('size=') >= 0 && data.indexOf('time=') >= 0 && data.indexOf('bitrate=') >= 0) { // TODO separate
+				return;
+			}
+
 			socket.readyState === 1 && socket.send(`$ ${logAlias} stderr: ${data}`);
 			console.log(`${logAlias} stderr: ${data}`);
 		});
