@@ -33,7 +33,9 @@ var keyToGpio = {
 
 /// INITIALIZE GPIO ////////////////////////////////////////////////////////////
 
-for (var gpioh in keyToGpio) {
+for (var gpio in keyToGpio) {
+	var gpioh = keyToGpio[ gpio ];
+
 	gpio.setup(gpioh.gpio, gpio.DIR_OUT);
 }
 
