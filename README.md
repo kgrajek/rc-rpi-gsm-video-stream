@@ -19,7 +19,15 @@
 -	! - commands sended to rc device. For example commands like: go forth, turn left etc or more complicated like "reset-video-stream"
 -	# - local log of given device
 
+## To Fix
+-	http://ws://...
+-
+
 ## Todo
+-	separate common code as npm and then this current usage (localconf, handlers as separate repo)
+-	komenda restartowqania aplikacji
+-	komenda na przeladowanie sterownika
+-	odiltrowac: vv stderr: frame=  862 fps= 23 q=2.0 size=    3494kB time=34.36 bitrate= 833.1kbits/s    
 -	eventy przez refleksje
 -	wss / ws
 -	> received < send # log @ broadcast
@@ -46,6 +54,7 @@ git push heroku master
 https://github.com/kgrajek/rc-rpi-gsm-video-stream.git
 
 ## Future
+-	list of methods should be dynamically getted from rpi (same with buttons / gpio)
 -	package for rotating proximity detector
 -	feature for taking photos (stop stream > take photo > start stream > upload too google)
 -	https://botland.com.pl/ultradzwiekowe-czujniki-odleglosci/2743-ultradzwiekowy-czujnik-odleglosci-us-015-2-400-cm.html
