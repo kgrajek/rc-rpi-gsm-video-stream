@@ -2,6 +2,7 @@ const localconf = require('../localconf');
 const spawn = require('child_process').spawn;
 const exec = require('child_process').exec;
 const kill = require('tree-kill');
+const gpio = require('rpi-gpio');
 
 const WebSocket = require('ws');
 const argv = require('yargs')
@@ -20,15 +21,21 @@ if (!argv.server) {
 // COMMANDS /////////////////////////////////////////////////////////////////////////
 
 var keyToGpio = {
-	turnl: { gpio: 0, mode: 'press', val: null, tid: false },
-	turnr: { gpio: 1, mode: 'press', val: null, tid: false },
-	forth: { gpio: 2, mode: 'hold',  val: null, tid: false },
-	back:  { gpio: 3, mode: 'press', val: null, tid: false, reset: 'forth' },
-	caml:  { gpio: 4, mode: 'press', val: null, tid: false },
-	camr:  { gpio: 5, mode: 'press', val: null, tid: false },
-	camu:  { gpio: 6, mode: 'press', val: null, tid: false },
-	camd:  { gpio: 7, mode: 'press', val: null, tid: false },
+	turnl: { gpio: 11, mode: 'press', val: null, tid: false },
+	turnr: { gpio: 12, mode: 'press', val: null, tid: false },
+	forth: { gpio: 13, mode: 'hold',  val: null, tid: false },
+	back:  { gpio: 15, mode: 'press', val: null, tid: false, reset: 'forth' },
+	caml:  { gpio: 16, mode: 'press', val: null, tid: false },
+	camr:  { gpio: 18, mode: 'press', val: null, tid: false },
+	camu:  { gpio: 22, mode: 'press', val: null, tid: false },
+	camd:  { gpio: 7,  mode: 'press', val: null, tid: false },
 };
+
+/// INITIALIZE GPIO ////////////////////////////////////////////////////////////
+
+for (var gpioh in keyToGpio) {
+	gpio.setup(gpioh.gpio, gpio.DIR_OUT);
+}
 
 /// command handlers ///////////////////////////////////////////////////////////
 
@@ -219,7 +226,7 @@ ws.on('message', function incoming(data, flags) {
 				keyToGpio[ gpreset ].value = false;
 				ws.send(`$ canceled ${gpreset}`);
 				console.log(`# canceled ${gpreset}`);
-				// TODO set gpio
+				gpioSet(gpio, 0);
 			}
 			else {
 				if (gpmode === 'press') {
@@ -229,7 +236,7 @@ ws.on('message', function incoming(data, flags) {
 					}
 
 					gpioh.value = true;
-					// TODO set gpio
+					gpioSet(gpio, 1);
 
 					gpioh.tid = setTimeout(
 						function() {
@@ -237,7 +244,7 @@ ws.on('message', function incoming(data, flags) {
 							console.log(`# de-activate ${command}`);
 							gpioh.tid = null;
 							gpioh.value = false;
-							// TODO set gpio
+							gpioSet(gpio, 0);
 						},
 						200 // TODO configure. Should be a little bit longer than key read interval on index.html
 					);
@@ -245,7 +252,7 @@ ws.on('message', function incoming(data, flags) {
 				else if (gpmode === 'hold') {
 					if (gpioh.value !== true) {
 						gpioh.value = true;
-						// TODO set gpio
+						gpioSet(gpio, 1);
 						ws.send(`$ activate ${command}`);
 						console.log(`# activate ${command}`);
 					}
@@ -287,4 +294,13 @@ var pinger = setInterval(function() {
 
 function cutProtocolFromUrl(url) {
 	return url.replace(/^\w{2,5}:\/\//, '');
+}
+
+function gpioSet(pin, value, socket) {
+	gpio.write(pin, value, function(err) {
+		if (err) {
+			socket.send(`# error while setting gpio ${pin}`);
+			console.log(`# error while setting gpio ${pin}`, err);
+		}
+	});
 }

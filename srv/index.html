@@ -183,7 +183,7 @@
 		var doRedirect = !argv.server;
 		var dontAsk = !doRedirect;
 		var confServer = fetchParam(argv.server, dontAsk, 'Adres serwera nasłuchującego', location.protocol + '//' + location.hostname);
-		var confPort = fetchParam(argv.port, dontAsk, 'Port', location.port);
+		var confPort = fetchParam(argv.port, dontAsk, 'Port', location.port || '80');
 	</script>
 	<script type="text/javascript">
 		if (doRedirect) {
