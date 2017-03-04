@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const url = require('url');
 const SocketServer = require('ws').Server;
+const localconf = require('../localconf');
 
 const argv = require('yargs')
 	.option('secret', { alias: 's', describe: 'secret to make sure that no one else will stream' })
@@ -14,11 +15,25 @@ const argv = require('yargs')
 	.argv;
 
 if (argv.port === 'auto' || !argv.port) {
-	argv.port = process.env.PORT;
+	if (process.env.PORT) {
+		argv.port = process.env.PORT;
+	}
 }
 
 if (!argv.port) {
-	argv.port = 8080;
+	argv.port = localconf.port;
+}
+
+if (!argv.secret) {
+	argv.secret = localconf.secret;
+}
+
+if (!argv.port) {
+	throw new Error('Missing port parameter! Aborting!');
+}
+
+if (!argv.secret) {
+	throw new Error('Missing secret parameter! Aborting!');
 }
 
 /// UTILITY FUNCTIONS //////////////////////////////////////////////////////////
