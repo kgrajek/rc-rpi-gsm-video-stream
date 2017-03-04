@@ -121,6 +121,7 @@ function parseMessage(msg) {
 	}
 
 	console.warn('Not parsed message:', msg.length, typeof msg === 'string' ? msg : typeof msg);
+	console.log(msg);
 }
 
 /// SERVER /////////////////////////////////////////////////////////////////////
