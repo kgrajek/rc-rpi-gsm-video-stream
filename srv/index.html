@@ -75,29 +75,22 @@
 		<option id="request_ship_status">request-ship-status</option>
 		<option id="unload_video_driver">unload-video-driver</option>
 		<option id="load_video_driver">load-video-driver</option>
-
 	</select>
 
 	<div id="console">
 	</div>
 
 	<div class="buttons noselect">
-		<button id="dpad_l" class="button" style="top:0%; left:0%; ">◀</button>
-		<button id="dpad_r" class="button" style="top:0%; left:25%;">▶</button>
-		<button id="dpad_t" class="button" style="top:0%; left:50%;">▲</button>
-		<button id="dpad_d" class="button" style="top:0%; left:75%;">▼</button>
+		<!-- TODO it should be readed from remote -->
+		<button id="turnl" class="button" style="top:0%; left:0%; "><div style="-webkit-transform: rotateZ(270deg)">▲</div></button>
+		<button id="turnr" class="button" style="top:0%; left:25%;"><div style="-webkit-transform: rotateZ(90deg)">▲</div></button>
+		<button id="forth" class="button" style="top:0%; left:50%;"><div style="-webkit-transform: rotateZ(0deg)">▲</div></button>
+		<button id="back"  class="button" style="top:0%; left:75%;"><div style="-webkit-transform: rotateZ(180deg)">▲</div></button>
 
-		<button id="joyL_l" class="button" style="top:50%; left:0%;">◀</button>
-		<button id="joyL_r" class="button" style="top:50%; left:25%;">▶</button>
-		<button id="joyL_t" class="button" style="top:50%; left:50%;">▲</button>
-		<button id="joyL_d" class="button" style="top:50%; left:75%;">▼</button>
-
-		<!--
-		<button id="x" class="button" style="top:66.6%; left:0%;">X</button>
-		<button id="y" class="button" style="top:66.6%; left:25%;">Y</button>
-		<button id="a" class="button" style="top:66.6%; left:50%;">A</button>
-		<button id="b" class="button" style="top:66.6%; left:75%;">B</button>
-		-->
+		<button id="caml" class="button" style="top:50%; left:0%; "><div style="-webkit-transform: rotateZ(270deg)">▲</div></button>
+		<button id="camr" class="button" style="top:50%; left:25%;"><div style="-webkit-transform: rotateZ(90deg)">▲</div></button>
+		<button id="camu" class="button" style="top:50%; left:50%;"><div style="-webkit-transform: rotateZ(0deg)">▲</div></button>
+		<button id="camd" class="button" style="top:50%; left:75%;"><div style="-webkit-transform: rotateZ(180deg)">▲</div></button>
 	</div>
 
 	<script type="text/javascript" src="libs/jsmpeg.min.js"></script>
@@ -108,11 +101,11 @@
 	</script>
 	<script type="text/javascript">
 		var query = location.search.substr(1);
-		var result = {};
+		var argv = {};
 		query.split('&').forEach(function(part) {
 			var item = part.split("=");
 
-			result[item[0]] = decodeURIComponent(item[1]);
+			argv[item[0]] = decodeURIComponent(item[1]);
 		});
 	</script>
 	<script type="text/javascript">
@@ -131,28 +124,28 @@
 		}
 	</script>
 	<script type="text/javascript">
-		jQuery(document.body).click(function(event){
-			var $this = jQuery(event.target);
-			var clickedId = $this.attr('id');
+		jQuery(document).ready(function() {
+			jQuery('#methods').change(function(event){
+				var $this = jQuery(event.target);
+				var clickedId = $this.attr('id');
 
-			if (event.target.tagName && event.target.tagName.toLowerCase() === 'select') {
-				clickedId = event.target.options[ event.target.selectedIndex ].id;
-				event.target.options[0].selected = 1;
-			}
+				if (event.target.tagName && event.target.tagName.toLowerCase() === 'select') {
+					clickedId = event.target.options[ event.target.selectedIndex ].id;
+					event.target.options[0].selected = 1;
+				}
 
-			if (clickedId) {
-				if (window['handle_click_' + clickedId]) {
-					try {
-						window['handle_click_' + clickedId]();
-					}
-					catch(ex) {
-						console.error(ex);
+				if (clickedId) {
+					if (window['handle_click_' + clickedId]) {
+						try {
+							window['handle_click_' + clickedId]();
+						}
+						catch(ex) {
+							console.error(ex);
+						}
 					}
 				}
-			}
+			});
 		});
-	</script>
-	<script type="text/javascript">
 	</script>
 	<script type="text/javascript">
 		function handle_click_turn_on_fullscreen() {
@@ -185,13 +178,12 @@
 			console.log('# requested: load-video-driver');
 			player.source.socket.send('! load-video-driver');
 		}
-
 	</script>
 	<script type="text/javascript">
-		var doRedirect = !result.server;
+		var doRedirect = !argv.server;
 		var dontAsk = !doRedirect;
-		var confServer = fetchParam(result.server, dontAsk, 'Adres serwera nasłuchującego', location.protocol + '//' + location.hostname);
-		var confPort = fetchParam(result.port, dontAsk, 'Port', location.port);
+		var confServer = fetchParam(argv.server, dontAsk, 'Adres serwera nasłuchującego', location.protocol + '//' + location.hostname);
+		var confPort = fetchParam(argv.port, dontAsk, 'Port', location.port);
 	</script>
 	<script type="text/javascript">
 		if (doRedirect) {
@@ -229,7 +221,8 @@
 				console.warn('# unknowm message:', data);
 			}
 		} });
-
+	</script>
+	<script type="text/javascript">
 		if (player && player.source.socket && player.source.socket) {
 			var socketWait = setInterval(
 				function() {
@@ -249,57 +242,9 @@
 		}
 	</script>
 	<script type="text/javascript">
-		window.addEventListener("gamepadconnected", function(e) {
-			console.log("gamepad connected");
-		});
-
-		window.addEventListener("gamepaddisconnected", function(e) {
-			console.log("gamepad disconnected");
-		});
-
-		function mapGamepadStateToKeys(gamepad) {
-			return {
-				// TODO this map is probably specific to my pad only
-				dpad_l: gamepad.axes[3] > 0.1,
-				dpad_r: gamepad.axes[4] > 0.1,
-				dpad_t: gamepad.axes[9] < -0.9,
-				dpad_d: gamepad.axes[9] < 0.5 && gamepad.axes[9] > 0.1,
-
-				joyL_l: gamepad.axes[0] < -0.5,  // -1 left; 1 right
-				joyL_r: gamepad.axes[0] > 0.5,
-				joyL_t: gamepad.axes[1] < -0.5, // -1 up; 1 down
-				joyL_d: gamepad.axes[1] > 0.5,
-
-				joyR_l: gamepad.axes[2] < -0.5, // -1 left; 1 right
-				joyR_r: gamepad.axes[2] > 0.5,
-				joyR_t: gamepad.axes[5] < -0.5, // -1 up; 1 down
-				joyR_d: gamepad.axes[5] > 0.5,
-
-				x: gamepad.buttons[3].value,
-				y: gamepad.buttons[4].value,
-				a: gamepad.buttons[0].value,
-				b: gamepad.buttons[1].value,
-				select: gamepad.buttons[10].value,
-				start: gamepad.buttons[11].value
-			};
-		}
-
-		function mapGamepadKeysToCommands(x) {
-			var commands = [];
-
-			for (var key in x) {
-				if (x[key]) {
-					commands.push(key);
-				}
-			}
-
-			return commands;
-		}
-	</script>
-	<script type="text/javascript">
 		var vpad = {};
-		jQuery(document).ready(function(){
-			jQuery('.button').each(function(){
+		jQuery(document).ready(function() {
+			jQuery('.button').each(function() {
 				var $this = jQuery(this);
 				var id = $this.attr('id');
 
@@ -314,51 +259,13 @@
 		});
 	</script>
 	<script type="text/javascript">
-		// connect command feeder
-		/*var ctrlWsUrl = 'ws://' + confServer + ':' + confPort + '/';
-		console.log(ctrlWsUrl);
-		setTimeout(function() {
-			var ctrlWs = new WebSocket(ctrlWsUrl);
-			ctrlWs.onopen = function open() {
-				ctrlWs.send('EHLOPAD');
-			};
-			ctrlWs.onmessage = function (event) {
-				console.log(event.data);
+		setInterval(function() {
+			for (var key in vpad) {
+				if (vpad[key]) {
+					player.source.socket.send('! ' + key);
+				}
 			}
-
-		}, 2000)*/
-	</script>
-	<script type="text/javascript">
-		// integrate pad with websocket
-
-		if (navigator.getGamepads) {
-			setInterval(function() {
-				var keys = {};
-
-				var gamepad = navigator.getGamepads()[0];
-				if (gamepad) {
-					keys = mapGamepadStateToKeys(gamepad);
-				}
-
-				for (var key in vpad) {
-					if (vpad[key]) {
-						keys[key] = vpad[key];
-					}
-				}
-
-				var commands = mapGamepadKeysToCommands(keys);
-				if (commands.length) {
-					// console.log(commands);
-				}
-
-				for (var i=0; i<commands.length; i++) {
-					player.source.socket.send('! ' + commands[i]);
-				}
-			}, 100);
-		}
-		else {
-			console.warn('# gamepad api not accessible');
-		}
+		}, 100);
 	</script>
 	<script type="text/javascript">
 		console.log('# aplication initialized');
