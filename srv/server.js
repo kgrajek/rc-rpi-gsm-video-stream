@@ -131,7 +131,7 @@ const httpServer = http.createServer(function(req, res) {
 	var params = req.url.substr(1).split('/');
 	if (params[0] === 'streamUpload') {
 		if (params[1] !== argv.secret) {
-			return rejectHttpRequest(res, 401, `Bad secret. Rejecting: ${req.socket.remoteAddress}:${req.socket.remotePort}`);
+			// return rejectHttpRequest(res, 401, `Bad secret. Rejecting: ${req.socket.remoteAddress}:${req.socket.remotePort}`);
 		}
 
 		console.log(`Stream Connected: ${req.socket.remoteAddress}:${req.socket.remotePort}`);
