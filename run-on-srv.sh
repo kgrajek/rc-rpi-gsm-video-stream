@@ -1,7 +1,6 @@
-#!/bin/bash
+#!/usr/bin/bash
 
-while 1
-do
-node ./srv/index.js;
-sleep 1
+until node ./srv/index.js $@; do
+	echo "srv/index.js crashed with exit code $?. respawning.." >&2
+	sleep 1
 done
