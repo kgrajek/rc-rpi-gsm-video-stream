@@ -24,8 +24,13 @@
 -
 
 ## Todo
+-	zczytywanie menu przez interval # z uwagi na kulawosc na mobilkach
+-	lepsza obsluga gpio
+-	fix strzalek na anelu sterowania
+-	osobne menu na akcje rpi i pad
 -	separate common code as npm and then this current usage (localconf, handlers as separate repo)
 -	komenda restartowqania aplikacji
+-	strona ala startowka idlecollector
 -	komenda na przeladowanie sterownika
 -	odiltrowac: vv stderr: frame=  862 fps= 23 q=2.0 size=    3494kB time=34.36 bitrate= 833.1kbits/s    
 -	eventy przez refleksje
@@ -43,6 +48,7 @@
 -	in case of heroku server/port change it should get access date from some solid domain
 -	move in wvdial.conf -> add warn if it differs from system
 -	make it always use wvdial rrgvs
+
 
 sudo modprobe -r bcm2835-v4l2
 sudo modprobe bcm2835-v4l2
