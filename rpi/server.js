@@ -1,9 +1,12 @@
-var localconf = require('../localconf');
+const localconf = require('../localconf');
+const spawn = require('child_process').spawn;
+const kill = require('tree-kill');
 
 const WebSocket = require('ws');
 const argv = require('yargs')
-	.option('server', { alias: 's', describe: 'addres of remote server' })
-	.option('port', { alias: 'p', describe: 'port' })
+	.option('server', { describe: 'addres of remote server' })
+	.option('secret', { describe: 'secreed needed for streaming' })
+	.option('port', { describe: 'port' })
 	.help()
 	.argv;
 
@@ -12,6 +15,8 @@ if (!argv.server) {
 	argv.server = localconf.server;
 	argv.port = localconf.port;
 }
+
+// ??? /////////////////////////////////////////////////////////////////////////
 
 var keyToGpio = {
 	dpad_l: 0,
@@ -37,16 +42,18 @@ var keyToGpio = {
 	start: null
 };
 
-/// handlers ///////////////////////////////////////////////////////////////////
+/// command handlers ///////////////////////////////////////////////////////////
 
 var handlers = {
 	handle_stop_stream: function(socket) {
+		streamer.stop();
 		console.log('# received request to stop stream');
-		socket.send('$ stream stoped');
+		socket.send('$ executing stream stop');
 	},
 	handle_restart_stream: function(socket) {
+		streamer.restart();
 		console.log('# received request to restart stream');
-		socket.send('$ stream started not');
+		socket.send('$ executing stream start');
 	},
 	handle_request_ship_status: function(socket) {
 		console.log('# generating ship status');
@@ -54,11 +61,95 @@ var handlers = {
 	}
 };
 
-///
+/// prepeare working commands //////////////////////////////////////////////////
 
-console.log(`# conecting to: ${argv.server}:${argv.port}`);
+/* function(error, stdout, stderr) {
+	console.log('stdout: ' + stdout);
+	console.log('stderr: ' + stderr);
+	if (error !== null) {
+		console.log('exec error: ' + error);
+	} */
 
-const ws = new WebSocket(argv.server + ':' + argv.port);
+function createExternalCommand(localconfCommand, logAlias, socket) {
+	let tmpl = localconf[ localconfCommand ];
+	tmpl = tmpl.replace(/%SERVER%/, localconf.server);
+	tmpl = tmpl.replace(/%PORT%/, localconf.port);
+	tmpl = tmpl.replace(/%SECRET%/, localconf.secret);
+
+	var child = null;
+
+	var fStart = function() {
+		var args = tmpl.split(/\s+/);
+		var cmd = args.shift();
+
+		child = spawn(cmd, args);
+
+		child.stdout.on('data', function(data) {
+			socket.readyState === 1 && socket.send(`$ ${logAlias} stdout: ${data}`);
+			console.log(`${logAlias} stdout: ${data}`);
+		});
+		child.stderr.on('data', function(data) {
+			socket.readyState === 1 && socket.send(`$ ${logAlias} stderr: ${data}`);
+			console.log(`${logAlias} stderr: ${data}`);
+		});
+		child.on('close', function(code) {
+			socket.readyState === 1 && socket.send(`$ ${logAlias} child process exited with code ${code}`);
+			console.log(`${logAlias} child process exited with code ${code}`);
+		});
+		child.on('error', (err) => {
+			socket.readyState === 1 && socket.send(`$ ${logAlias} failed to start child process.`);
+			console.log(`${logAlias} failed to start child process.`);
+		});
+	};
+
+	var fRestart = function() {
+		if (child) {
+			fStop();
+		}
+
+		setTimeout(
+			function() {
+				fStart();
+			},
+			1000
+		);
+	};
+
+	var fStop = function() {
+		if (child) {
+			kill(child.pid);
+		}
+	}
+
+	return {
+		start: fStart,
+		restart: fRestart,
+		stop: fStop
+	}
+}
+
+function createWebServiceConnection(callback) {
+	console.log(`# conecting to: ${argv.server}:${argv.port}`);
+
+	return new WebSocket(argv.server + ':' + argv.port);
+
+	/* let ws;
+	goto: do {
+		try {
+			ws = new WebSocket(argv.server + ':' + argv.port);
+		}
+		catch(ex) {
+			console.error('#### ', ex);
+			continue goto;
+		}
+	} while(false);
+
+	console.log('!!!');
+
+	return ws; */
+}
+
+let ws = createWebServiceConnection();
 ws.on('open', function open() {
 	ws.send('EHLOSHIP');
 	console.info('# Send EHLOSHIP. Waiting for SHIPEHLO ...');
@@ -82,6 +173,7 @@ ws.on('message', function incoming(data, flags) {
 				handlers['handle_' + command](ws);
 			}
 			catch(ex) {
+				console.log(ex);
 				ws.send(`$ error while executing ${command}`);
 			}
 
@@ -102,8 +194,24 @@ ws.on('message', function incoming(data, flags) {
 	}
 });
 
+const dialer = createExternalCommand('command:dialin', 'ii', ws);
+dialer.start();
+
+const streamer = createExternalCommand('command:stream', 'vv', ws);
+streamer.start();
+
 ///
 
-setInterval(function() {
-	ws.send('$ ping');
+var pinger = setInterval(function() {
+	if (ws.readyState === 1) {
+		ws.send('$ ping');
+	}
+	else {
+		console.warn(`# Unable to send ping. Socket readyState: ${ws.readyState}`);
+		// clearInterval(pinger);
+		// process.exit();
+		ws = createWebServiceConnection();
+	}
 }, 1000 * 7);
+
+/// UTILITIES //////////////////////////////////////////////////////////////////
