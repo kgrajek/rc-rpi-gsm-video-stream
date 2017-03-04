@@ -242,6 +242,7 @@
 		}
 	</script>
 	<script type="text/javascript">
+		// 1 key is pressed, 2 - command was send, 0.5 key was pressed but not send. send it on next cycle
 		var vpad = {};
 		jQuery(document).ready(function() {
 			jQuery('.button').each(function() {
@@ -253,7 +254,12 @@
 				});
 
 				$this.on('mouseleave mouseup touchend ', function() {
-					vpad[id] = 0;
+					if (vpad[id] === 2) {
+						vpad[id] = 0;
+					}
+					else {
+						vpad[id] = 0.5; // in such
+					}
 				});
 			});
 		});
@@ -261,7 +267,12 @@
 	<script type="text/javascript">
 		setInterval(function() {
 			for (var key in vpad) {
-				if (vpad[key]) {
+				if (vpad[key] === 1) {
+					vpad[key] = 2;
+					player.source.socket.send('! ' + key);
+				}
+				else if (vpad[key] === 0.5) {
+					vpad[key] = 0;
 					player.source.socket.send('! ' + key);
 				}
 			}
