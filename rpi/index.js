@@ -226,7 +226,7 @@ ws.on('message', function incoming(data, flags) {
 				keyToGpio[ gpreset ].value = false;
 				ws.send(`$ canceled ${gpreset}`);
 				console.log(`# canceled ${gpreset}`);
-				gpioSet(gpio, 0);
+				gpioSet(gpio, 0, ws);
 			}
 			else {
 				if (gpmode === 'press') {
@@ -236,7 +236,7 @@ ws.on('message', function incoming(data, flags) {
 					}
 
 					gpioh.value = true;
-					gpioSet(gpio, 1);
+					gpioSet(gpio, 1, ws);
 
 					gpioh.tid = setTimeout(
 						function() {
@@ -244,7 +244,7 @@ ws.on('message', function incoming(data, flags) {
 							console.log(`# de-activate ${command}`);
 							gpioh.tid = null;
 							gpioh.value = false;
-							gpioSet(gpio, 0);
+							gpioSet(gpio, 0, ws);
 						},
 						200 // TODO configure. Should be a little bit longer than key read interval on index.html
 					);
@@ -252,7 +252,7 @@ ws.on('message', function incoming(data, flags) {
 				else if (gpmode === 'hold') {
 					if (gpioh.value !== true) {
 						gpioh.value = true;
-						gpioSet(gpio, 1);
+						gpioSet(gpio, 1, ws);
 						ws.send(`$ activate ${command}`);
 						console.log(`# activate ${command}`);
 					}
@@ -299,7 +299,10 @@ function cutProtocolFromUrl(url) {
 function gpioSet(pin, value, socket) {
 	gpio.write(pin, value, function(err) {
 		if (err) {
-			socket.send(`# error while setting gpio ${pin}`);
+			if (socket) {
+				socket.send(`# error while setting gpio ${pin}`);
+			}
+
 			console.log(`# error while setting gpio ${pin}`, err);
 		}
 	});
