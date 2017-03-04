@@ -150,7 +150,7 @@ const httpServer = http.createServer(function(req, res) {
 	}
 	else {
 		if (req.method !== 'GET') {
-			return rejectHttpRequest(res, 400, `Not supported method: ${req.method}!`);
+			// return rejectHttpRequest(res, 400, `Not supported method: ${req.method}!`);
 		}
 
 		let relfilepath = getFilepathFromUrl(req.url);
