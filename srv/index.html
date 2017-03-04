@@ -73,6 +73,9 @@
 		<option id="stop_stream">stop-stream</option>
 		<option id="restart_stream">restart-stream</option>
 		<option id="request_ship_status">request-ship-status</option>
+		<option id="unload_video_driver">unload-video-driver</option>
+		<option id="load_video_driver">load-video-driver</option>
+
 	</select>
 
 	<div id="console">
@@ -167,13 +170,22 @@
 			player.source.socket.send('! stop-stream');
 		}
 		function handle_click_restart_stream() {
-			console.log('# requested:  restart-stream');
+			console.log('# requested: restart-stream');
 			player.source.socket.send('! restart-stream');
 		}
 		function handle_click_request_ship_status() {
-			console.log('# requested:  request-ship-status');
+			console.log('# requested: request-ship-status');
 			player.source.socket.send('! request-ship-status');
 		}
+		function handle_click_unload_video_driver() {
+			console.log('# requested: unload-video-driver');
+			player.source.socket.send('! unload-video-driver');
+		}
+		function handle_click_load_video_driver() {
+			console.log('# requested: load-video-driver');
+			player.source.socket.send('! load-video-driver');
+		}
+
 	</script>
 	<script type="text/javascript">
 		var doRedirect = !result.server;
