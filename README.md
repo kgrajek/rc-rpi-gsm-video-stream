@@ -24,6 +24,7 @@
 -
 
 ## Todo
+-	initialize and destroy pins should be as methods to allow remote reseting
 -	zczytywanie menu przez interval # z uwagi na kulawosc na mobilkach
 -	lepsza obsluga gpio
 -	fix strzalek na anelu sterowania

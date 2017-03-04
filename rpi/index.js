@@ -21,20 +21,20 @@ if (!argv.server) {
 // COMMANDS /////////////////////////////////////////////////////////////////////////
 
 var keyToGpio = {
-	turnl: { gpio: 11, mode: 'press', val: null, tid: false },
-	turnr: { gpio: 12, mode: 'press', val: null, tid: false },
-	forth: { gpio: 13, mode: 'hold',  val: null, tid: false },
-	back:  { gpio: 15, mode: 'press', val: null, tid: false, reset: 'forth' },
-	caml:  { gpio: 16, mode: 'press', val: null, tid: false },
-	camr:  { gpio: 18, mode: 'press', val: null, tid: false },
-	camu:  { gpio: 22, mode: 'press', val: null, tid: false },
-	camd:  { gpio: 7,  mode: 'press', val: null, tid: false },
+	turnl: { num: 11, mode: 'press', val: null, tid: false },
+	turnr: { num: 12, mode: 'press', val: null, tid: false },
+	forth: { num: 13, mode: 'hold',  val: null, tid: false },
+	back:  { num: 15, mode: 'press', val: null, tid: false, reset: 'forth' },
+	caml:  { num: 16, mode: 'press', val: null, tid: false },
+	camr:  { num: 18, mode: 'press', val: null, tid: false },
+	camu:  { num: 22, mode: 'press', val: null, tid: false },
+	camd:  { num: 7,  mode: 'press', val: null, tid: false },
 };
 
 /// INITIALIZE GPIO ////////////////////////////////////////////////////////////
 
-for (var gpio in keyToGpio) {
-	var gpioh = keyToGpio[ gpio ];
+for (var k in keyToGpio) {
+	var gpioh = keyToGpio[ k ];
 
 	gpio.setup(gpioh.gpio, gpio.DIR_OUT);
 }
@@ -213,7 +213,7 @@ ws.on('message', function incoming(data, flags) {
 
 		var gpioh = keyToGpio[ command ];
 		if (gpioh) {
-			var gpio = gpioh.gpio;
+			var gpnum = gpioh.num;
 			var gpmode = gpioh.mode;
 			var gpval = gpioh.val;
 			var gptid = gpioh.tid;
@@ -228,7 +228,7 @@ ws.on('message', function incoming(data, flags) {
 				keyToGpio[ gpreset ].value = false;
 				ws.send(`$ canceled ${gpreset}`);
 				console.log(`# canceled ${gpreset}`);
-				gpioSet(gpio, 0, ws);
+				gpioSet(gpnum, 0, ws);
 			}
 			else {
 				if (gpmode === 'press') {
@@ -238,7 +238,7 @@ ws.on('message', function incoming(data, flags) {
 					}
 
 					gpioh.value = true;
-					gpioSet(gpio, 1, ws);
+					gpioSet(gpnum, 1, ws);
 
 					gpioh.tid = setTimeout(
 						function() {
@@ -246,7 +246,7 @@ ws.on('message', function incoming(data, flags) {
 							console.log(`# de-activate ${command}`);
 							gpioh.tid = null;
 							gpioh.value = false;
-							gpioSet(gpio, 0, ws);
+							gpioSet(gpnum, 0, ws);
 						},
 						200 // TODO configure. Should be a little bit longer than key read interval on index.html
 					);
@@ -254,7 +254,7 @@ ws.on('message', function incoming(data, flags) {
 				else if (gpmode === 'hold') {
 					if (gpioh.value !== true) {
 						gpioh.value = true;
-						gpioSet(gpio, 1, ws);
+						gpioSet(gpnum, 1, ws);
 						ws.send(`$ activate ${command}`);
 						console.log(`# activate ${command}`);
 					}
