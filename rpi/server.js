@@ -71,8 +71,8 @@ var handlers = {
 	} */
 
 function createExternalCommand(localconfCommand, logAlias, socket) {
-	let tmpl = localconf[ localconfCommand ];
-	tmpl = tmpl.replace(/%SERVER%/, localconf.server);
+	var tmpl = localconf[ localconfCommand ];
+	tmpl = tmpl.replace(/%SERVER%/, cutProtocolFromUrl(localconf.server));
 	tmpl = tmpl.replace(/%PORT%/, localconf.port);
 	tmpl = tmpl.replace(/%SECRET%/, localconf.secret);
 
@@ -149,7 +149,7 @@ function createWebServiceConnection(callback) {
 	return ws; */
 }
 
-let ws = createWebServiceConnection();
+var ws = createWebServiceConnection();
 ws.on('open', function open() {
 	ws.send('EHLOSHIP');
 	console.info('# Send EHLOSHIP. Waiting for SHIPEHLO ...');
@@ -198,7 +198,6 @@ const dialer = createExternalCommand('command:dialin', 'ii', ws);
 dialer.start();
 
 const streamer = createExternalCommand('command:stream', 'vv', ws);
-streamer.start();
 
 ///
 
@@ -215,3 +214,7 @@ var pinger = setInterval(function() {
 }, 1000 * 7);
 
 /// UTILITIES //////////////////////////////////////////////////////////////////
+
+function cutProtocolFromUrl(url) {
+	return url.replace(/^\w{2,5}:\/\//, '');
+}

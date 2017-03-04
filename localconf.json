@@ -1,0 +1,9 @@
+{
+	"server": "ws://mighty-peak-93491.herokuapp.com",
+	"port": 80,
+	"secret": "99876",
+	"command:dialin": "wvdial aero2",
+	"command:stream": "avconv -f video4linux2 -framerate 25 -video_size 320x200 -i /dev/video0 -f mpegts -codec:v mpeg1video -s 320x200 -b:v 1000k -bf 0 http://%SERVER%:%PORT%/streamUpload/%SECRET%",
+	"command:unloadDriver": "sudo modprobe -r bcm2835-v4l2",
+	"command:loadDriver": "sudo modprobe bcm2835-v4l2"
+}
