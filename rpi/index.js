@@ -60,7 +60,7 @@ var handlers = {
 		});
 	},
 	handle_load_video_driver: function(socket) {
-		exec(localconf['command:unloadDriver'], function(err, stdout, stderr) {
+		exec(localconf['command:loadDriver'], function(err, stdout, stderr) {
 			if (err) {
 				console.log('# loading driver failed');
 				socket.send('$ loading driver failed');
