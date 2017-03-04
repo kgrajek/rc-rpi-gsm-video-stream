@@ -1,5 +1,6 @@
 const localconf = require('../localconf');
 const spawn = require('child_process').spawn;
+const exec = require('child_process').exec;
 const kill = require('tree-kill');
 
 const WebSocket = require('ws');
@@ -58,6 +59,30 @@ var handlers = {
 	handle_request_ship_status: function(socket) {
 		console.log('# generating ship status');
 		socket.send('$ ship is probably ok');
+	},
+	handle_unload_video_driver: function(socket) {
+		exec(localconf.command:unloadDriver, function(error, stdout, stderr) {
+			if (err) {
+				console.log('# unloading driver failed');
+				socket.send('$ unloading driver failed');
+			}
+			else {
+				console.log('# unloading driver done');
+				socket.send('$ unloading driver done');
+			}
+		});
+	},
+	handle_load_video_driver: function(socket) {
+		exec(localconf.command:unloadDriver, function(error, stdout, stderr) {
+			if (err) {
+				console.log('# loading driver failed');
+				socket.send('$ loading driver failed');
+			}
+			else {
+				console.log('# loading driver done');
+				socket.send('$ loading driver done');
+			}
+		});
 	}
 };
 
