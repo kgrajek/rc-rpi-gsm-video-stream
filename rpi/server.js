@@ -17,30 +17,17 @@ if (!argv.server) {
 	argv.port = localconf.port;
 }
 
-// ??? /////////////////////////////////////////////////////////////////////////
+// COMMANDS /////////////////////////////////////////////////////////////////////////
 
 var keyToGpio = {
-	dpad_l: 0,
-	dpad_r: 1,
-	dpad_t: 2,
-	dpad_d: 3,
-
-	joyL_l: 4,
-	joyL_r: 5,
-	joyL_t: 6,
-	joyL_d: 7,
-
-	joyR_l: null,
-	joyR_r: null,
-	joyR_t: null,
-	joyR_d: null,
-
-	x: null,
-	y: null,
-	a: null,
-	b: null,
-	select: null,
-	start: null
+	turnl: { gpio: 0, mode: 'press', val: null, tid: false },
+	turnr: { gpio: 1, mode: 'press', val: null, tid: false },
+	forth: { gpio: 2, mode: 'hold',  val: null, tid: false },
+	back:  { gpio: 3, mode: 'press', val: null, tid: false, reset: 'forth' },
+	caml:  { gpio: 4, mode: 'press', val: null, tid: false },
+	camr:  { gpio: 5, mode: 'press', val: null, tid: false },
+	camu:  { gpio: 6, mode: 'press', val: null, tid: false },
+	camd:  { gpio: 7, mode: 'press', val: null, tid: false },
 };
 
 /// command handlers ///////////////////////////////////////////////////////////
@@ -61,7 +48,7 @@ var handlers = {
 		socket.send('$ ship is probably ok');
 	},
 	handle_unload_video_driver: function(socket) {
-		exec(localconf['command:unloadDriver'], function(error, stdout, stderr) {
+		exec(localconf['command:unloadDriver'], function(err, stdout, stderr) {
 			if (err) {
 				console.log('# unloading driver failed');
 				socket.send('$ unloading driver failed');
@@ -73,7 +60,7 @@ var handlers = {
 		});
 	},
 	handle_load_video_driver: function(socket) {
-		exec(localconf['command:unloadDriver'], function(error, stdout, stderr) {
+		exec(localconf['command:unloadDriver'], function(err, stdout, stderr) {
 			if (err) {
 				console.log('# loading driver failed');
 				socket.send('$ loading driver failed');
@@ -110,7 +97,10 @@ function createExternalCommand(localconfCommand, logAlias, socket) {
 		child = spawn(cmd, args);
 
 		child.stdout.on('data', function(data) {
-			socket.readyState === 1 && socket.send(`$ ${logAlias} stdout: ${data}`);
+			if (socket.readyState === 1) {
+				socket.send(`$ ${logAlias} stdout: ${data}`);
+			}
+
 			console.log(`${logAlias} stdout: ${data}`);
 		});
 		child.stderr.on('data', function(data) {
@@ -118,7 +108,10 @@ function createExternalCommand(localconfCommand, logAlias, socket) {
 				return;
 			}
 
-			socket.readyState === 1 && socket.send(`$ ${logAlias} stderr: ${data}`);
+			if (socket.readyState === 1) {
+				socket.send(`$ ${logAlias} stderr: ${data}`);
+			}
+
 			console.log(`${logAlias} stderr: ${data}`);
 		});
 		child.on('close', function(code) {
@@ -209,12 +202,60 @@ ws.on('message', function incoming(data, flags) {
 			return;
 		}
 
-		var gpio = keyToGpio[ command ];
-		if (gpio >= 0) {
-			// if full forward then back as stop else as back
-			//
-			ws.send(`$ turned on gpio ${gpio}`);
-			console.log('# turn gpio:', gpio);
+		var gpioh = keyToGpio[ command ];
+		if (gpioh) {
+			var gpio = gpioh.gpio;
+			var gpmode = gpioh.mode;
+			var gpval = gpioh.val;
+			var gptid = gpioh.tid;
+			var gpreset = gpioh.reset;
+
+			if (gptid) {
+				clearTimeout(gptid);
+				gpioh.tid = null;
+			}
+
+			if (gpreset && keyToGpio[ gpreset ].value) {
+				keyToGpio[ gpreset ].value = false;
+				ws.send(`$ canceled ${gpreset}`);
+				console.log(`# canceled ${gpreset}`);
+				// TODO set gpio
+			}
+			else {
+				if (gpmode === 'press') {
+					if (gpioh.value !== true) {
+						ws.send(`$ activate ${command}`);
+						console.log(`# activate ${command}`);
+					}
+
+					gpioh.value = true;
+					// TODO set gpio
+
+					gpioh.tid = setTimeout(
+						function() {
+							ws.send(`$ de-activate ${command}`);
+							console.log(`# de-activate ${command}`);
+							gpioh.tid = null;
+							gpioh.value = false;
+							// TODO set gpio
+						},
+						200 // TODO configure. Should be a little bit longer than key read interval on index.html
+					);
+				}
+				else if (gpmode === 'hold') {
+					if (gpioh.value !== true) {
+						gpioh.value = true;
+						// TODO set gpio
+						ws.send(`$ activate ${command}`);
+						console.log(`# activate ${command}`);
+					}
+				}
+				else {
+					ws.send(`$ unknown command ${command}`);
+					console.log(`# unknown command ${command}`);
+				}
+			}
+
 			return;
 		}
 
