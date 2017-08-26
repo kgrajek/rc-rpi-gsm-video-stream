@@ -74,7 +74,7 @@ function fake$console(div, type, msg) {
 	jQuery(div).prepend($entry);
 	setTimeout(function() {
 		$entry.remove();
-	}, 5000)
+	}, 50000)
 
 	div.scrollTop = 0;
 
