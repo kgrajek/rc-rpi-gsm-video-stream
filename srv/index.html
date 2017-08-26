@@ -96,6 +96,7 @@
 	<select id="methods">
 		<option selected>-</option>
 		<option value="turn_on_fullscreen">turn-on-fullscreen</option>
+		<option value="request_rc_methods">request-rc-methods</option>
 	</select>
 
 	<script type="text/javascript" src="libs/jsmpeg.min.js"></script>
@@ -178,6 +179,10 @@
 				console.warn('# fullscreen api not avaiable');
 			}
 		}
+		function handle_click_request_rc_methods() {
+			console.log('# requested remote methods');
+			player.source.socket.send('! RPIMETHODS');
+		}
 	</script>
 	<script type="text/javascript">
 		var doRedirect = !argv.server;
@@ -215,6 +220,7 @@
 			}
 			else if (data.substring(0, 12) === '$ RPIMETHOD:') {
 				var matched = data.match(/^\$ RPIMETHOD:(.*)$/);
+				console.log('# registered rpimethod:', matched[1]);
 				jQuery('#rpimethods').append(new Option(matched[1], matched[1]));
 			}
 			else if (data.substring(0, 2) === '$ ') {
