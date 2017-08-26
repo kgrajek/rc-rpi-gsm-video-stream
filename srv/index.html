@@ -210,11 +210,11 @@
 			if (data === 'PADEHLO') {
 				console.log('# ...PADEHLO received. Ready to go!');
 			}
-			else if (data === '! RPIMETHODSCLR') {
+			else if (data === '$ RPIMETHODSCLR') {
 				jQuery('#rpimethods').find('option').not(':first').remove();
 			}
-			else if (data.substring(0, 12) === '! RPIMETHOD:') {
-				var matched = data.match(/^! RPIMETHOD:(.*)$/);
+			else if (data.substring(0, 12) === '$ RPIMETHOD:') {
+				var matched = data.match(/^\$ RPIMETHOD:(.*)$/);
 				jQuery('#rpimethods').append(new Option(matched[1], matched[1]));
 			}
 			else if (data.substring(0, 2) === '$ ') {
