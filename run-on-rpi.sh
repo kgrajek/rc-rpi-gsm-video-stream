@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-until node ./rpi/index.js $@; do
-	echo "rpi/index.js crashed with exit code $?. respawning.." >&2
+until node "${BASH_SOURCE%/*}/rpi/index.js" $@; do
+	echo "${BASH_SOURCE%/*}/rpi/index.js crashed with exit code $?. respawning.." >&2
 	sleep 1
 done

@@ -63,6 +63,12 @@ sudo modprobe -r bcm2835-v4l2
 sudo modprobe bcm2835-v4l2
 avconv -f video4linux2 -framerate 25 -video_size 320x200 -i /dev/video0 -f mpegts -codec:v mpeg1video -s 320x200 -b:v 1000k -bf 0 http://192.168.1.100:8081/streamUpload/dupa123
 
+nalezy zainstalowac sobie: sudo apt-get install screen
+instrukcja odpalenia na rpi w screen: https://coderwall.com/p/quflrg/run-a-script-on-startup-in-a-detached-screen-on-a-raspberry-pi
+- w zasadzie do: sudo vim /etc/rc.local 
+	- dopisac: su - pi -c "screen -dm -S pistartup sudo bash /home/pi/Desktop/rc-rpi-gsm-video-stream/run-on-rpi.sh"
+	- i potem po starcie w: screen -x masz wszystko
+
 heroku logs --tail
 git push heroku master
 
