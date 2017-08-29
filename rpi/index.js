@@ -21,14 +21,14 @@ if (!argv.server) {
 // COMMANDS /////////////////////////////////////////////////////////////////////////
 
 var keyToGpio = {
-	turnl: { num: 11, mode: 'press', val: null, tid: false },
-	turnr: { num: 12, mode: 'press', val: null, tid: false },
-	forth: { num: 13, mode: 'hold',  val: null, tid: false },
-	back:  { num: 15, mode: 'press', val: null, tid: false, reset: 'forth' },
-	caml:  { num: 16, mode: 'press', val: null, tid: false },
-	camr:  { num: 18, mode: 'press', val: null, tid: false },
-	camu:  { num: 22, mode: 'press', val: null, tid: false },
-	camd:  { num: 7,  mode: 'press', val: null, tid: false },
+	turnl: { num:  7, mode: 'press', val: null, tid: false },
+	turnr: { num: 11, mode: 'press', val: null, tid: false },
+	forth: { num: 16, mode: 'hold',  val: null, tid: false },
+	back:  { num: 22, mode: 'press', val: null, tid: false, reset: 'forth' },
+	caml:  { num: 12, mode: 'press', val: null, tid: false },
+	camr:  { num: 13, mode: 'press', val: null, tid: false },
+	camu:  { num: 15, mode: 'press', val: null, tid: false },
+	camd:  { num: 18,  mode: 'press', val: null, tid: false },
 };
 
 /// INITIALIZE GPIO ////////////////////////////////////////////////////////////
@@ -232,7 +232,7 @@ ws.on('message', function incoming(data, flags) {
 				keyToGpio[ gpreset ].value = false;
 				ws.send(`$ canceled ${gpreset}`);
 				console.log(`# canceled ${gpreset}`);
-				gpioSet(gpnum, 0, ws);
+				gpioSet(keyToGpio[ gpreset ].num, 0, ws);
 			}
 			else {
 				if (gpmode === 'press') {
