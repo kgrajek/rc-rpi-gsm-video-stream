@@ -32,7 +32,7 @@
 			font-family: courier;
 		}
 
-		#methods {
+		#rpimethods {
 			width: 100%;
 			height: 5vh;
 		}
@@ -42,7 +42,7 @@
 			width: 100%;
 			margin-left: auto;
 			margin-right: auto;
-			height: 25vh;
+			height: 20vh;
 		}
 		.button {
 			position: absolute;
@@ -52,6 +52,11 @@
 			font-size: 100%;
 			padding: 0;
 			text-align: center;
+		}
+
+		#methods {
+			width: 100%;
+			height: 5vh;
 		}
 
 		.noselect {
@@ -67,14 +72,8 @@
 <body>
 	<canvas id="stdvideo" style=""></canvas>
 
-	<select id="methods">
+	<select id="rpimethods">
 		<option selected>-</option>
-		<option id="turn_on_fullscreen">turn-on-fullscreen</option>
-		<option id="stop_stream">stop-stream</option>
-		<option id="restart_stream">restart-stream</option>
-		<option id="request_ship_status">request-ship-status</option>
-		<option id="unload_video_driver">unload-video-driver</option>
-		<option id="load_video_driver">load-video-driver</option>
 	</select>
 
 	<div id="console">
@@ -92,6 +91,12 @@
 		<button id="camu" class="button" style="top:50%; left:50%;"><div style="-webkit-transform: rotateZ(0deg)">▲</div></button>
 		<button id="camd" class="button" style="top:50%; left:75%;"><div style="-webkit-transform: rotateZ(180deg)">▲</div></button>
 	</div>
+
+
+	<select id="methods">
+		<option selected>-</option>
+		<option id="turn_on_fullscreen">turn-on-fullscreen</option>
+	</select>
 
 	<script type="text/javascript" src="libs/jsmpeg.min.js"></script>
 	<script type="text/javascript" src="libs/console.js"></script>
@@ -122,18 +127,32 @@
 		function changeProtocol(protocol, url) {
 			return url.replace(/^\w{2,5}:\/\//, protocol + '://');
 		}
+		function eventGetSelectedAndReset(event) {
+			var $this = jQuery(event.target);
+			var clickedId = $this.attr('id');
+
+			if (event.target.tagName && event.target.tagName.toLowerCase() === 'select') {
+				clickedId = event.target.options[ event.target.selectedIndex ].id;
+				event.target.options[0].selected = 1;
+			}
+
+			return clickedId;
+		}
 	</script>
 	<script type="text/javascript">
 		jQuery(document).ready(function() {
-			jQuery('#methods').change(function(event){
-				var $this = jQuery(event.target);
-				var clickedId = $this.attr('id');
-
-				if (event.target.tagName && event.target.tagName.toLowerCase() === 'select') {
-					clickedId = event.target.options[ event.target.selectedIndex ].id;
-					event.target.options[0].selected = 1;
+			jQuery('#rpimethods').change(function(event) {
+				var clickedId = eventGetSelectedAndReset(event);
+				if (clickedId) {
+					alert('Execute on rpi:' + clickedId);
 				}
-
+			});
+		});
+	</script>
+	<script type="text/javascript">
+		jQuery(document).ready(function() {
+			jQuery('#methods').change(function(event) {
+				var clickedId = eventGetSelectedAndReset(event);
 				if (clickedId) {
 					if (window['handle_click_' + clickedId]) {
 						try {
