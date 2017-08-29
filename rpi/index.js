@@ -95,7 +95,7 @@ var handlers = {
 		console.log('exec error: ' + error);
 	} */
 
-function createExternalCommand(localconfCommand, logAlias, socket) {
+function createExternalCommand(localconfCommand, logAlias, retryTimeout, socket) {
 	var tmpl = localconf[ localconfCommand ];
 	tmpl = tmpl.replace(/%SERVER%/, cutProtocolFromUrl(localconf.server));
 	tmpl = tmpl.replace(/%PORT%/, localconf.port);
@@ -128,8 +128,16 @@ function createExternalCommand(localconfCommand, logAlias, socket) {
 			console.log(`${logAlias} stderr: ${data}`);
 		});
 		child.on('close', function(code) {
-			socket.readyState === 1 && socket.send(`$ ${logAlias} child process exited with code ${code}`);
+			if (socket.readyState === 1) {
+				socket.send(`$ ${logAlias} child process exited with code ${code}`);
+			}
+
 			console.log(`${logAlias} child process exited with code ${code}`);
+			if (retryTimeout) {
+				setTimeout(function() {
+					fStart();
+				}, retryTimeout);
+			}
 		});
 		child.on('error', (err) => {
 			socket.readyState === 1 && socket.send(`$ ${logAlias} failed to start child process.`);
@@ -166,22 +174,24 @@ function createExternalCommand(localconfCommand, logAlias, socket) {
 function createWebServiceConnection(callback) {
 	console.log(`# conecting to: ${argv.server}:${argv.port}`);
 
-	return new WebSocket(argv.server + ':' + argv.port);
+	// return new WebSocket(argv.server + ':' + argv.port);
 
-	/* let ws;
+	var count = 1;
+	var ws;
 	goto: do {
 		try {
+			console.log('# ... attempt:', count);
 			ws = new WebSocket(argv.server + ':' + argv.port);
 		}
 		catch(ex) {
-			console.error('#### ', ex);
+			console.error('# ... error', ex);
 			continue goto;
 		}
 	} while(false);
 
-	console.log('!!!');
+	console.log('# ... conected');
 
-	return ws; */
+	return ws;
 }
 
 var ws = createWebServiceConnection();
@@ -276,10 +286,10 @@ ws.on('message', function incoming(data, flags) {
 	}
 });
 
-const dialer = createExternalCommand('command:dialin', 'ii', ws);
+const dialer = createExternalCommand('command:dialin', 'ii', 20000, ws);
 dialer.start();
 
-const streamer = createExternalCommand('command:stream', 'vv', ws);
+const streamer = createExternalCommand('command:stream', 'vv', null, ws);
 
 ///
 
