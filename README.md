@@ -24,6 +24,11 @@
 -
 
 ## Todo
+-	Dodac jako komende confirmowalna
+	sync; echo 3 | sudo tee /proc/sys/vm/drop_caches
+	dd if=/dev/zero of=~/test.tmp bs=500K count=1024
+	dd if=~/test.tmp of=/dev/null bs=500K count=1024
+-	KOmenda do testowania uploadu: iperf?
 -	add command which will cause error on rpi
 -	add stoping stream on server when last client disconnects
 -	add stoping stream to rpi if no commands were sent in x minutes
