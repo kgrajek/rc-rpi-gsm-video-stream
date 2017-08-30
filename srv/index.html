@@ -95,7 +95,7 @@
 
 	<select id="methods">
 		<option selected>-</option>
-		<option id="turn_on_fullscreen">turn-on-fullscreen</option>
+		<option value="turn_on_fullscreen">turn-on-fullscreen</option>
 	</select>
 
 	<script type="text/javascript" src="libs/jsmpeg.min.js"></script>
@@ -129,22 +129,23 @@
 		}
 		function eventGetSelectedAndReset(event) {
 			var $this = jQuery(event.target);
-			var clickedId = $this.attr('id');
+			var clickedValue = $this.attr('id');
 
 			if (event.target.tagName && event.target.tagName.toLowerCase() === 'select') {
-				clickedId = event.target.options[ event.target.selectedIndex ].id;
+				clickedValue = event.target.options[ event.target.selectedIndex ].value;
 				event.target.options[0].selected = 1;
 			}
 
-			return clickedId;
+			return clickedValue;
 		}
 	</script>
 	<script type="text/javascript">
 		jQuery(document).ready(function() {
 			jQuery('#rpimethods').change(function(event) {
-				var clickedId = eventGetSelectedAndReset(event);
-				if (clickedId) {
-					alert('Execute on rpi:' + clickedId);
+				var clickedValue = eventGetSelectedAndReset(event);
+				if (clickedValue) {
+					console.log('# requested:', clickedValue);
+					player.source.socket.send('! ' + clickedValue);
 				}
 			});
 		});
@@ -152,11 +153,11 @@
 	<script type="text/javascript">
 		jQuery(document).ready(function() {
 			jQuery('#methods').change(function(event) {
-				var clickedId = eventGetSelectedAndReset(event);
-				if (clickedId) {
-					if (window['handle_click_' + clickedId]) {
+				var clickedValue = eventGetSelectedAndReset(event);
+				if (clickedValue) {
+					if (window['handle_click_' + clickedValue]) {
 						try {
-							window['handle_click_' + clickedId]();
+							window['handle_click_' + clickedValue]();
 						}
 						catch(ex) {
 							console.error(ex);
@@ -176,26 +177,6 @@
 			else {
 				console.warn('# fullscreen api not avaiable');
 			}
-		}
-		function handle_click_stop_stream() {
-			console.log('# requested: stop-stream');
-			player.source.socket.send('! stop-stream');
-		}
-		function handle_click_restart_stream() {
-			console.log('# requested: restart-stream');
-			player.source.socket.send('! restart-stream');
-		}
-		function handle_click_request_ship_status() {
-			console.log('# requested: request-ship-status');
-			player.source.socket.send('! request-ship-status');
-		}
-		function handle_click_unload_video_driver() {
-			console.log('# requested: unload-video-driver');
-			player.source.socket.send('! unload-video-driver');
-		}
-		function handle_click_load_video_driver() {
-			console.log('# requested: load-video-driver');
-			player.source.socket.send('! load-video-driver');
 		}
 	</script>
 	<script type="text/javascript">
@@ -225,13 +206,16 @@
 		}
 	</script>
 	<script type="text/javascript">
-		var canvas = document.getElementById('stdvideo');
-		var isHttps = envIsOnHttps();
-		var socketUrl = changeProtocol(isHttps ? 'wss' : 'ws', confServer);
-		var url = socketUrl  + ( confPort ? ':' + confPort + '/' : '');
-		var player = new JSMpeg.Player(url, { canvas:canvas, interceptor:function(data) {
+		function commandReciver(data) {
 			if (data === 'PADEHLO') {
 				console.log('# ...PADEHLO received. Ready to go!');
+			}
+			else if (data === '! RPIMETHODSCLR') {
+				jQuery('#rpimethods').find('option').not(':first').remove();
+			}
+			else if (data.substring(0, 12) === '! RPIMETHOD:') {
+				var matched = data.match(/^! RPIMETHOD:(.*)$/);
+				jQuery('#rpimethods').append(new Option(matched[1], matched[1]));
 			}
 			else if (data.substring(0, 2) === '$ ') {
 				console.log(data);
@@ -239,7 +223,17 @@
 			else {
 				console.warn('# unknowm message:', data);
 			}
-		} });
+		}
+	</script>
+	<script type="text/javascript">
+		var canvas = document.getElementById('stdvideo');
+		var isHttps = envIsOnHttps();
+		var socketUrl = changeProtocol(isHttps ? 'wss' : 'ws', confServer);
+		var url = socketUrl  + ( confPort ? ':' + confPort + '/' : '');
+		var player = new JSMpeg.Player(url, {
+			canvas: canvas,
+			interceptor: commandReciver
+		});
 	</script>
 	<script type="text/javascript">
 		if (player && player.source.socket && player.source.socket) {
